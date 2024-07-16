@@ -1,0 +1,22 @@
+{
+  "name": "ntentan/mvc",
+  "type": "library",
+  "description": "An MVC component for the Ntentan framework",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.2.0",
+    "ntentan/ntentan": "0.*"
+  },
+  "authors": [
+    {
+      "name": "James Ekow Abaka Ainooson",
+      "email": "jainooson@gmail.com",
+      "homepage": "http://ekowabaka.me"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "ntentan\\mvc\\": "src/"
+    }
+  }
+}

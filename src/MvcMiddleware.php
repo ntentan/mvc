@@ -10,10 +10,9 @@ use ntentan\panie\Inject;
 use ntentan\panie\Container;
 use ntentan\utils\Text;
 use ntentan\exceptions\NtentanException;
-use ntentan\controllers\ModelBinderRegistry;
+use ntentan\mvc\binders\ModelBinderRegistry;
 use ntentan\attributes\Action;
 use ntentan\attributes\Method;
-use ntentan\View;
 use ntentan\http\StringStream;
 
 /**

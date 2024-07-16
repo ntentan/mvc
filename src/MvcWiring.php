@@ -1,9 +1,8 @@
 <?php
 namespace ntentan\mvc;
 
-use ntentan\controllers\ModelBinderRegistry;
-use ntentan\View;
-use ntentan\controllers\model_binders\ViewBinder;
+use ntentan\mvc\binders\ModelBinderRegistry;
+use ntentan\mvc\binders\ViewBinder;
 use ntentan\controllers\model_binders\DefaultModelBinder;
 use ntentan\panie\Container;
 

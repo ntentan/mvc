@@ -1,13 +1,12 @@
 <?php
 
-namespace ntentan\middleware;
+namespace ntentan\mvc;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\Middleware;
 use ntentan\Router;
 use ntentan\panie\Inject;
-use ntentan\middleware\mvc\ServiceContainerBuilder;
 use ntentan\panie\Container;
 use ntentan\utils\Text;
 use ntentan\exceptions\NtentanException;

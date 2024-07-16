@@ -1,5 +1,5 @@
 <?php
-namespace ntentan\middleware\mvc;
+namespace ntentan\mvc;
 
 use ntentan\honam\EngineRegistry;
 use ntentan\honam\engines\php\HelperVariable;

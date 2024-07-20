@@ -1,6 +1,6 @@
 <?php
 
-namespace ntentan\mvc\;
+namespace ntentan\mvc;
 
 use ntentan\nibii\interfaces\ModelFactoryInterface;
 use ntentan\nibii\ORMContext;
@@ -9,11 +9,6 @@ use ntentan\utils\Text;
 class MvcModelFactory implements ModelFactoryInterface
 {
     private $context;
-
-//    public function __construct(Context $context)
-//    {
-//        $this->context = $context;
-//    }
 
     public function createModel($name, $context)
     {

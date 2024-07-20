@@ -16,14 +16,14 @@ use Psr\Http\Message\StreamInterface;
  *
  * @author ekow
  */
-class View //implements RenderableInterface //, ThemableInterface
+class View 
 {
     /**
      * Description of the default layout
      * 
      * @var string
      */
-    private string $layout = 'primary';
+    private string $layout = 'default';
     
     /**
      * Description of the default template.

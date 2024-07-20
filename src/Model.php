@@ -1,6 +1,6 @@
 <?php
 
-namespace ntentan;
+namespace ntentan\mvc;
 
 use ntentan\nibii\RecordWrapper;
 use ntentan\atiaa\Driver;

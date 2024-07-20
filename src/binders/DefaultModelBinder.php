@@ -1,11 +1,10 @@
 <?php
 
-namespace ntentan\controllers\model_binders;
+namespace ntentan\mvc\binders;
 
 use ntentan\utils\Input;
-use ntentan\utils\Text;
-use ntentan\Controller;
-use ntentan\controllers\ModelBinderInterface;
+use ntentan\mvc\binders\ModelBinderInterface;
+use ntentan\mvc\Model;
 
 /**
  * This class is responsible for binding request data with standard ntentan models or classes.
@@ -18,12 +17,12 @@ class DefaultModelBinder implements ModelBinderInterface
      * @param \ntentan\Model $object
      * @return array
      */
-    private function getModelFields($object)
+    private function getModelFields(Model $object): array
     {
         return array_keys($object->getDescription()->getFields());
     }
     
-    private function getClassFields($object)
+    private function getClassFields(mixed $object): array
     {
         $reflection = new \ReflectionClass($object);
         $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
@@ -34,6 +33,7 @@ class DefaultModelBinder implements ModelBinderInterface
         return $fields;
     }
 
+    #[\Override]
     public function bind(array $data)
     {
         $instance = $data["instance"];
@@ -47,6 +47,7 @@ class DefaultModelBinder implements ModelBinderInterface
         return $instance;
     }
 
+    #[\Override]
     public function getRequirements(): array
     {
         return ['instance'];

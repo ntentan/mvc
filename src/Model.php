@@ -4,6 +4,7 @@ namespace ntentan\mvc;
 
 use ntentan\nibii\RecordWrapper;
 use ntentan\atiaa\Driver;
+use ntentan\nibii\ORMContext;
 
 /**
  * An extension of the nibii\RecordWrapper which contains specific extensions to make models in ntentan easier to use.
@@ -15,13 +16,11 @@ class Model extends RecordWrapper
     /**
      * Loads a model described by a string.
      * @param string $name
-     * @return nibii\RecordWrapper
-     * @throws nibii\exceptions\NibiiException
      * @todo Rewrite this so it works on its own here
      */
     public static function load($name)
     {
-        return nibii\ORMContext::getInstance()->load($name);
+        return ORMContext::getInstance()->load($name);
     }
 
     /**

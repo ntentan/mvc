@@ -30,7 +30,6 @@ class ServiceContainerBuilder
 
     public function getContainer(ServerRequestInterface $request, ResponseInterface $response)
     {
-//         $this->container->provide("string", "home")->with(fn() => $this->home);
         $this->container->setup([
             Templates::class => [Templates::class, 'singleton' => true],
             Request::class => fn() => $request,

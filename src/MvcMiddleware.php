@@ -5,7 +5,6 @@ namespace ntentan\mvc;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\Middleware;
-use ntentan\Router;
 use ntentan\panie\Inject;
 use ntentan\panie\Container;
 use ntentan\utils\Text;
@@ -23,11 +22,11 @@ class MvcMiddleware implements Middleware
 
     private Router $router;
     
-    private Container $serviceContainer;
-    
     private ServiceContainerBuilder $containerBuilder;
     
     private ModelBinderRegistry $modelBinders;
+    
+    private Container $serviceContainer;
 
     #[Inject]
     private string $namespace = 'app';
@@ -38,37 +37,60 @@ class MvcMiddleware implements Middleware
         $this->containerBuilder = $containerBuilder;
         $this->modelBinders = $modelBinders;
     }
+    
+    protected function getServiceContainer(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        if(!isset($this->serviceContainer)) {
+            $this->serviceContainer = $this->containerBuilder->getContainer($request, $response);
+        }
+        return $this->serviceContainer;
+    }
+    
+    /**
+     * Returns a structural array with information about the controller class to load, the action method to call, and
+     * the parameters to bind to the action method.
+     * 
+     * @param ServerRequestInterface $request
+     * @return array
+     */
+    protected function getController(ServerRequestInterface $request): array
+    {
+        $uri = $request->getUri();
+        $parameters = $this->router->route($uri->getPath(), $uri->getQuery());
+        $parameters['class_name'] = sprintf(
+            '\%s\controllers\%sController', $this->namespace, Text::ucamelize($parameters['controller'])
+        );        
+        return $parameters;
+    }
 
     #[\Override]
     public function run(ServerRequestInterface $request, ResponseInterface $response, callable $next): ResponseInterface
     {
-        $this->serviceContainer = $this->containerBuilder->getContainer($request, $response);
-        $uri = $request->getUri();
+        $container = $this->getServiceContainer($request, $response);
+        $controller = $this->getController($request);
+        $controllerClassName = $controller['class_name'];
+        $controllerInstance = $container->get($controllerClassName);
         $response = $response->withStatus(200);
-        $route = $this->router->route($uri->getPath(), $uri->getQuery());
-        $controllerClassName = sprintf(
-            '\%s\controllers\%sController', $this->namespace, Text::ucamelize($route['controller'])
-        );
-        $controller = $this->serviceContainer->get($controllerClassName);
-        $methods = $this->getListOfMethods($controller, $controllerClassName);
-        $methodKey = "{$route['action']}." . strtolower($request->getMethod());
-        $routeParameters = array_keys($route);
+        $methods = $this->getMethods($controllerInstance, $controllerClassName);
+        $methodKey = "{$controller['action']}." . strtolower($request->getMethod());
+        unset($controller['class_name']);
+        $routeParameters = array_keys($controller);
         
         if (isset($methods[$methodKey])) {
             $method = $methods[$methodKey];
-            $callable = new \ReflectionMethod($controller, $method['name']);
+            $callable = new \ReflectionMethod($controllerInstance, $method['name']);
             $argumentDescription = $callable->getParameters();
             $arguments = [];
             
             foreach($argumentDescription as $argument) {
                 if ($argument->getType()->isBuiltIn() && in_array($argument->getName(), $routeParameters)) {
-                    $arguments[] = $route[$argument->getName()];
+                    $arguments[] = $controller[$argument->getName()];
                 } else {
-                    $arguments[] = $this->bindParameter($argument, $route);
+                    $arguments[] = $this->bindParameter($argument, $controller, $container);
                 }
             }
             
-            $output = $callable->invokeArgs($controller, $arguments);
+            $output = $callable->invokeArgs($controllerInstance, $arguments);
             
             return match(true) {
                 $output instanceof View => $response->withBody($output->asStream()),
@@ -79,10 +101,12 @@ class MvcMiddleware implements Middleware
             };
         }
         
-        throw new NtentanException("Could not resolve a controller for the current request [{$uri->getPath()}].");
+        throw new NtentanException(
+            "Could not resolve a controller/method combination for the current request [{$request->getUri()->getPath()}]."
+        );
     }
     
-    private function bindParameter(\ReflectionParameter $parameter, array $route)
+    private function bindParameter(\ReflectionParameter $parameter, array $route, Container $container)
     {
         $type = $parameter->getType();
         
@@ -91,12 +115,12 @@ class MvcMiddleware implements Middleware
             return null;
         }
         
-        $binder = $this->serviceContainer->get($this->modelBinders->get($type->getName()));
+        $binder = $container->get($this->modelBinders->get($type->getName()));
         $binderData = [];
         
         foreach($binder->getRequirements() as $required) {
             $binderData[$required] = match($required) {
-                'instance' => $this->serviceContainer->get($type->getName()),
+                'instance' => $container->get($type->getName()),
                 'route' => $route,
                 default => throw new NtentanException("Cannot satisfy data binding requirement: {$required}")
             };
@@ -105,7 +129,12 @@ class MvcMiddleware implements Middleware
         return $binder->bind($binderData);
     }
     
-    private function getListOfMethods(object $controller, string $className): array
+    protected function getRouter(): Router
+    {
+        return $this->router;
+    }
+    
+    private function getMethods(object $controller, string $className): array
     {
         $methods = (new \ReflectionClass($controller))->getMethods(\ReflectionMethod::IS_PUBLIC);
         $results = [];
@@ -138,6 +167,7 @@ class MvcMiddleware implements Middleware
         return $results;
     }
     
+    #[\Override]
     public function configure(array $configuration)
     {
         $this->router->setRoutes($configuration['routes']);

@@ -14,16 +14,6 @@ use ntentan\nibii\ORMContext;
 class Model extends RecordWrapper
 {
     /**
-     * Loads a model described by a string.
-     * @param string $name
-     * @todo Rewrite this so it works on its own here
-     */
-    public static function load($name)
-    {
-        return ORMContext::getInstance()->load($name);
-    }
-
-    /**
      * Create a new instance of this Model
      * @return \ntentan\nibii\RecordWrapper
      */

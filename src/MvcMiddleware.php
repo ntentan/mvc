@@ -10,8 +10,8 @@ use ntentan\panie\Container;
 use ntentan\utils\Text;
 use ntentan\exceptions\NtentanException;
 use ntentan\mvc\binders\ModelBinderRegistry;
-use ntentan\attributes\Action;
-use ntentan\attributes\Method;
+use ntentan\mvc\attributes\Action;
+use ntentan\mvc\attributes\Method;
 use ntentan\http\StringStream;
 
 /**
@@ -151,7 +151,8 @@ class MvcMiddleware implements Middleware
             foreach ($method->getAttributes() as $attribute) {
                 match($attribute->getName()) {
                     Action::class => $action = $attribute->newInstance()->getPath(),
-                    Method::class => $requestMethod = "." . strtolower($attribute->newInstance()->getType())
+                    Method::class => $requestMethod = "." . strtolower($attribute->newInstance()->getType()),
+                    default => null
                 };
             }
 

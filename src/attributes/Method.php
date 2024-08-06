@@ -1,5 +1,5 @@
 <?php
-namespace ntentan\attributes;
+namespace ntentan\mvc\attributes;
 
 use Attribute;
 

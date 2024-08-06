@@ -1,0 +1,96 @@
+<?php
+namespace ntentan\mvc;
+
+use ntentan\mvc\binders\ModelBinderRegistry;
+use ntentan\mvc\binders\ViewBinder;
+use ntentan\mvc\binders\DefaultModelBinder;
+
+use ntentan\panie\Container;
+
+use ntentan\nibii\ORMContext;
+use ntentan\nibii\interfaces\ModelFactoryInterface;
+use ntentan\nibii\interfaces\DriverAdapterFactoryInterface;
+use ntentan\nibii\interfaces\ValidatorFactoryInterface;
+use ntentan\nibii\factories\DefaultModelFactory;
+use ntentan\nibii\factories\DriverAdapterFactory;
+use ntentan\nibii\factories\DefaultValidatorFactory;
+use ntentan\atiaa\DbContext;
+use ntentan\atiaa\DriverFactory;
+use ntentan\kaikai\Cache;
+
+
+class MvcCore {
+    
+    private static Container $container;
+    
+    /**
+     * Initialize database subsystem of the MVC middleware.
+     * This is useful in cases where the Model infrastructure is needed outside of the MVC system. The 
+     * `configureAndGetWiring` method must be called to setup all parameters before this method is called. 
+     */
+    public static function initializeDatabase(): void
+    {
+        $configuration = self::$container->get('$ntentanConfig:array');
+        if (isset($configuration['db'])) {
+            ORMContext::initialize(
+                    self::$container->get(ModelFactoryInterface::class),
+                    self::$container->get(DriverAdapterFactoryInterface::class),
+                    self::$container->get(ValidatorFactoryInterface::class),
+                    self::$container->get(Cache::class)
+                );
+            DbContext::initialize(new DriverFactory($configuration['db']));
+        } 
+    }
+    
+    /**
+     * Get the MVC middleware's container configuration. 
+     * Passing the output of
+     * 
+     * @return array
+     */
+    public static function configureAndGetWiring(Container $container): array 
+    {         
+        self::$container = $container;
+        
+        return [
+            MvcMiddleware::class => [
+                function(Container $container) {
+                    $instance = new MvcMiddleware(
+                        $container->get(Router::class), 
+                        $container->get(ServiceContainerBuilder::class), 
+                        $container->get(ModelBinderRegistry::class)
+                    );
+                    self::initializeDatabase(); 
+                    return $instance;
+                },
+                'singleton' => true
+            ],
+            
+            ModelFactoryInterface::class => [DefaultModelFactory::class, 'singleton' => true],
+            
+            ValidatorFactoryInterface::class => [DefaultValidatorFactory::class, 'singleton' => true],
+            
+            DriverAdapterFactoryInterface::class => [
+                function(Container $container) {
+                    $config = $container->get('$ntentanConfig:array');
+                    return new DriverAdapterFactory($config['db']['driver']);
+                }, 
+                'singleton' => true
+            ],
+            
+            ModelBinderRegistry::class => [
+                function(Container $container) {
+                    // Register model binders
+                    $registry = new ModelBinderRegistry();
+                    $registry->setDefaultBinderClass(DefaultModelBinder::class);
+                    $registry->register(View::class, ViewBinder::class);
+                              
+                    return $registry;
+                },
+                'singleton' => true
+            ],
+            
+            ServiceContainerBuilder::class => ['singleton' => true]
+        ];
+    }
+}

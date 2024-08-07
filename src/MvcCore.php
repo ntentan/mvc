@@ -84,7 +84,6 @@ class MvcCore {
                     $registry = new ModelBinderRegistry();
                     $registry->setDefaultBinderClass(DefaultModelBinder::class);
                     $registry->register(View::class, ViewBinder::class);
-                              
                     return $registry;
                 },
                 'singleton' => true

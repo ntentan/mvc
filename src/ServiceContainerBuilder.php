@@ -15,12 +15,15 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\http\Request;
 use ntentan\http\Response;
+use ntentan\http\Uri;
 
 
+/**
+ * 
+ */
 class ServiceContainerBuilder
 {
     private Container $container;
-//     private string $home;
     
     public function __construct(string $home)
     {
@@ -30,10 +33,12 @@ class ServiceContainerBuilder
 
     public function getContainer(ServerRequestInterface $request, ResponseInterface $response)
     {
+        $uri = $request->getUri();
         $this->container->setup([
             Templates::class => [Templates::class, 'singleton' => true],
-            Request::class => fn() => $request,
-            Response::class => fn() => $response,
+            Request::class => fn() => $request instanceof Request ? $request : null,
+            Response::class => fn() => $response instanceof Response ? $response : null,
+            Uri::class => fn() => $uri instanceof Uri ? $uri : null,
             ServerRequestInterface::class => fn() => $request,
             ResponseInterface::class => fn() => $response,
             TemplateFileResolver::class => [

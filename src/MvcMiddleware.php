@@ -19,7 +19,7 @@ use ntentan\http\StringStream;
  */
 class MvcMiddleware implements Middleware
 {
-
+    
     private Router $router;
     
     private ServiceContainerBuilder $containerBuilder;

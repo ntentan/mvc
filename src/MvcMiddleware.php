@@ -5,7 +5,6 @@ namespace ntentan\mvc;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\Middleware;
-use ntentan\panie\Inject;
 use ntentan\panie\Container;
 use ntentan\utils\Text;
 use ntentan\exceptions\NtentanException;
@@ -28,14 +27,12 @@ class MvcMiddleware implements Middleware
     
     private Container $serviceContainer;
 
-    #[Inject]
     private string $namespace = 'app';
 
-    public function __construct(Router $router, ServiceContainerBuilder $containerBuilder, ModelBinderRegistry $modelBinders)
+    public function __construct(Router $router, ServiceContainerBuilder $containerBuilder)
     {
         $this->router = $router;
         $this->containerBuilder = $containerBuilder;
-        $this->modelBinders = $modelBinders;
     }
     
     protected function getServiceContainer(ServerRequestInterface $request, ResponseInterface $response)
@@ -53,7 +50,7 @@ class MvcMiddleware implements Middleware
      * @param ServerRequestInterface $request
      * @return array
      */
-    protected function getController(ServerRequestInterface $request): array
+    protected function getControllerSpec(ServerRequestInterface $request): array
     {
         $uri = $request->getUri();
         $parameters = $this->router->route($uri->getPath(), $uri->getQuery());
@@ -62,19 +59,30 @@ class MvcMiddleware implements Middleware
         );        
         return $parameters;
     }
+    
+    protected function getControllerInstance(Container $container, array $controllerSpec)
+    {
+        return $container->get($controllerSpec['class_name']);
+    }
+    
+    protected function getModelBinders(Container $container): ModelBinderRegistry
+    {
+        return $container->get(ModelBinderRegistry::class);
+    }
 
     #[\Override]
     public function run(ServerRequestInterface $request, ResponseInterface $response, callable $next): ResponseInterface
     {
         $container = $this->getServiceContainer($request, $response);
-        $controller = $this->getController($request);
-        $controllerClassName = $controller['class_name'];
-        $controllerInstance = $container->get($controllerClassName);
+        $this->modelBinders = $this->getModelBinders($container);
+        $controllerSpec = $this->getControllerSpec($request);
+        $controllerClassName = $controllerSpec['class_name'];
+        $controllerInstance = $this->getControllerInstance($container, $controllerSpec);
         $response = $response->withStatus(200);
         $methods = $this->getMethods($controllerInstance, $controllerClassName);
-        $methodKey = "{$controller['action']}." . strtolower($request->getMethod());
-        unset($controller['class_name']);
-        $routeParameters = array_keys($controller);
+        $methodKey = "{$controllerSpec['action']}." . strtolower($request->getMethod());
+        unset($controllerSpec['class_name']);
+        $routeParameters = array_keys($controllerSpec);
         
         if (isset($methods[$methodKey])) {
             $method = $methods[$methodKey];
@@ -84,9 +92,9 @@ class MvcMiddleware implements Middleware
             
             foreach($argumentDescription as $argument) {
                 if ($argument->getType()->isBuiltIn() && in_array($argument->getName(), $routeParameters)) {
-                    $arguments[] = $controller[$argument->getName()];
+                    $arguments[] = $controllerSpec[$argument->getName()];
                 } else {
-                    $arguments[] = $this->bindParameter($argument, $controller, $container);
+                    $arguments[] = $this->bindParameter($argument, $controllerSpec, $container);
                 }
             }
             
@@ -172,5 +180,15 @@ class MvcMiddleware implements Middleware
     public function configure(array $configuration)
     {
         $this->router->setRoutes($configuration['routes']);
+    }
+    
+    public function setNamespace(string $namespace): void
+    {
+        $this->namespace = $namespace;
+    }
+    
+    protected function getNamespace(): string
+    {
+        return $this->namespace;
     }
 }

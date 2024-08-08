@@ -16,11 +16,11 @@ use Psr\Http\Message\ResponseInterface;
 use ntentan\http\Request;
 use ntentan\http\Response;
 use ntentan\http\Uri;
+use ntentan\mvc\binders\ModelBinderRegistry;
+use ntentan\mvc\binders\DefaultModelBinder;
+use ntentan\mvc\binders\ViewBinder;
 
 
-/**
- * 
- */
 class ServiceContainerBuilder
 {
     private Container $container;
@@ -41,6 +41,16 @@ class ServiceContainerBuilder
             Uri::class => fn() => $uri instanceof Uri ? $uri : null,
             ServerRequestInterface::class => fn() => $request,
             ResponseInterface::class => fn() => $response,
+            ModelBinderRegistry::class => [
+                function(Container $container) {
+                    // Register model binders
+                    $registry = new ModelBinderRegistry();
+                    $registry->setDefaultBinderClass(DefaultModelBinder::class);
+                    $registry->register(View::class, ViewBinder::class);
+                    return $registry;
+                },
+                'singleton' => true
+                ],
             TemplateFileResolver::class => [
                 function(Container $container) {
                     $fileResolver = new TemplateFileResolver();

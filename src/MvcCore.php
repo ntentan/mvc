@@ -48,18 +48,19 @@ class MvcCore {
      * 
      * @return array
      */
-    public static function configureAndGetWiring(Container $container): array 
+    public static function configure(Container $container, string $namespace): array 
     {         
         self::$container = $container;
         
         return [
             MvcMiddleware::class => [
-                function(Container $container) {
+                function(Container $container) use ($namespace) {
                     $instance = new MvcMiddleware(
                         $container->get(Router::class), 
                         $container->get(ServiceContainerBuilder::class), 
                         $container->get(ModelBinderRegistry::class)
                     );
+                    $instance->setNamespace($namespace);
                     self::initializeDatabase(); 
                     return $instance;
                 },
@@ -75,17 +76,6 @@ class MvcCore {
                     $config = $container->get('$ntentanConfig:array');
                     return new DriverAdapterFactory($config['db']['driver']);
                 }, 
-                'singleton' => true
-            ],
-            
-            ModelBinderRegistry::class => [
-                function(Container $container) {
-                    // Register model binders
-                    $registry = new ModelBinderRegistry();
-                    $registry->setDefaultBinderClass(DefaultModelBinder::class);
-                    $registry->register(View::class, ViewBinder::class);
-                    return $registry;
-                },
                 'singleton' => true
             ],
             

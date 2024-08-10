@@ -50,19 +50,30 @@ class MvcMiddleware implements Middleware
      * @param ServerRequestInterface $request
      * @return array
      */
-    protected function getControllerSpec(ServerRequestInterface $request): array
+    protected function getControllerSpec(ServerRequestInterface $request): ControllerSpec
     {
         $uri = $request->getUri();
         $parameters = $this->router->route($uri->getPath(), $uri->getQuery());
-        $parameters['class_name'] = sprintf(
-            '\%s\controllers\%sController', $this->namespace, Text::ucamelize($parameters['controller'])
-        );        
-        return $parameters;
+        $controllerSpec = new ControllerSpec(
+            sprintf('\%s\controllers\%sController', $this->namespace, Text::ucamelize($parameters['controller'])),
+            $parameters['action'], $parameters['controller'], $parameters
+            
+        );
+        unset($parameters['class_name']);
+        unset($parameters['action']);
+        return $controllerSpec;
     }
     
-    protected function getControllerInstance(Container $container, array $controllerSpec)
+    /**
+     * Create an instance of the controller from the controller specification. 
+     * 
+     * @param Container $container
+     * @param array $controllerSpec
+     * @return mixed
+     */
+    protected function getControllerInstance(Container $container, ControllerSpec $controllerSpec)
     {
-        return $container->get($controllerSpec['class_name']);
+        return $container->get($controllerSpec->getControllerClass());
     }
     
     protected function getModelBinders(Container $container): ModelBinderRegistry
@@ -76,13 +87,14 @@ class MvcMiddleware implements Middleware
         $container = $this->getServiceContainer($request, $response);
         $this->modelBinders = $this->getModelBinders($container);
         $controllerSpec = $this->getControllerSpec($request);
-        $controllerClassName = $controllerSpec['class_name'];
+        $container->bind(ControllerSpec::class)->to(fn() => $controllerSpec);
+        $controllerClassName = $controllerSpec->getControllerClass(); //['class_name'];
         $controllerInstance = $this->getControllerInstance($container, $controllerSpec);
         $response = $response->withStatus(200);
         $methods = $this->getMethods($controllerInstance, $controllerClassName);
-        $methodKey = "{$controllerSpec['action']}." . strtolower($request->getMethod());
-        unset($controllerSpec['class_name']);
-        $routeParameters = array_keys($controllerSpec);
+        $methodKey = "{$controllerSpec->getControllerAction()}." . strtolower($request->getMethod());
+//         unset($controllerSpec['class_name']);
+//         $routeParameters = array_keys($controllerSpec);
         
         if (isset($methods[$methodKey])) {
             $method = $methods[$methodKey];
@@ -91,10 +103,10 @@ class MvcMiddleware implements Middleware
             $arguments = [];
             
             foreach($argumentDescription as $argument) {
-                if ($argument->getType()->isBuiltIn() && in_array($argument->getName(), $routeParameters)) {
+                if ($argument->getType()->isBuiltIn() && in_array($argument->getName(), $controllerSpec->identifyParameters())) {
                     $arguments[] = $controllerSpec[$argument->getName()];
                 } else {
-                    $arguments[] = $this->bindParameter($argument, $controllerSpec, $container);
+                    $arguments[] = $this->bindParameter($argument, $container);
                 }
             }
             
@@ -114,7 +126,7 @@ class MvcMiddleware implements Middleware
         );
     }
     
-    private function bindParameter(\ReflectionParameter $parameter, array $route, Container $container)
+    private function bindParameter(\ReflectionParameter $parameter, Container $container)
     {
         $type = $parameter->getType();
         
@@ -124,17 +136,7 @@ class MvcMiddleware implements Middleware
         }
         
         $binder = $container->get($this->modelBinders->get($type->getName()));
-        $binderData = [];
-        
-        foreach($binder->getRequirements() as $required) {
-            $binderData[$required] = match($required) {
-                'instance' => $container->get($type->getName()),
-                'route' => $route,
-                default => throw new NtentanException("Cannot satisfy data binding requirement: {$required}")
-            };
-        }
-        
-        return $binder->bind($binderData);
+        return $binder->bind($container->get($type->getName()));
     }
     
     protected function getRouter(): Router

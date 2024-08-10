@@ -2,6 +2,7 @@
 namespace ntentan\mvc\binders;
 
 use ntentan\honam\Templates;
+use ntentan\mvc\ControllerSpec;
 
 /**
  * Creates an instance of the View class and sets the appropriate template and layouts for binding in action methods.
@@ -11,33 +12,29 @@ use ntentan\honam\Templates;
 class ViewBinder implements ModelBinderInterface
 {
 
-    private $templates;
+    private Templates $templates;
+    private string $home;
+    private ControllerSpec $controllerSpec;
 
-    private $home;
-
-    public function __construct(Templates $templates, string $home)
+    public function __construct(Templates $templates, ControllerSpec $controllerSpec, string $home)
     {
         $this->templates = $templates;
         $this->home = $home;
+        $this->controllerSpec = $controllerSpec;
+    }
+    
+    protected function getControllerSpec(): ControllerSpec 
+    {
+        return $this->controllerSpec;
     }
 
     #[\Override]
-    public function bind(array $data)
+    public function bind(mixed $view): mixed 
     {
-        $className = strtolower($data["route"]["controller"]);
-        $action = strtolower($data["route"]["action"]);
+        $className = $this->controllerSpec->getControllerName(); 
+        $action = $this->controllerSpec->getControllerAction();
         $this->templates->prependPath("{$this->home}/views/{$className}");
-        $instance = $data["instance"];
-        $instance->setTemplate("{$className}_{$action}.tpl.php");
-        return $instance;
-    }
-
-    #[\Override]
-    public function getRequirements(): array
-    {
-        return [
-            "instance",
-            "route"
-        ];
+        $view->setTemplate("{$className}_{$action}.tpl.php");
+        return $view;
     }
 }

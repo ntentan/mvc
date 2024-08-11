@@ -33,7 +33,7 @@ class ControllerSpec
     public function __construct(string $controllerClass, string $controllerAction, string $controllerName, array $parameters=[]) {
         $this->controllerClass = $controllerClass;
         $this->controllerAction = $controllerAction;
-        $this->controllerName = $controllerName;
+        $this->controllerName = strtolower($controllerName);
         $this->parameters = $parameters;
     }
     

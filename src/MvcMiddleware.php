@@ -9,8 +9,9 @@ use ntentan\panie\Container;
 use ntentan\utils\Text;
 use ntentan\exceptions\NtentanException;
 use ntentan\mvc\binders\ModelBinderRegistry;
-use ntentan\mvc\attributes\Action;
-use ntentan\mvc\attributes\Method;
+use ntentan\http\filters\Header;
+use ntentan\http\filters\Method;
+use ntentan\http\filters\MimeHeader;
 use ntentan\http\StringStream;
 
 /**
@@ -18,6 +19,7 @@ use ntentan\http\StringStream;
  */
 class MvcMiddleware implements Middleware
 {
+    private const FILTER_ATTRIBUTES = [Header::class, Method::class, MimeHeader::class];
     
     private Router $router;
     
@@ -88,42 +90,37 @@ class MvcMiddleware implements Middleware
         $this->modelBinders = $this->getModelBinders($container);
         $controllerSpec = $this->getControllerSpec($request);
         $container->bind(ControllerSpec::class)->to(fn() => $controllerSpec);
-        $controllerClassName = $controllerSpec->getControllerClass(); //['class_name'];
         $controllerInstance = $this->getControllerInstance($container, $controllerSpec);
         $response = $response->withStatus(200);
-        $methods = $this->getMethods($controllerInstance, $controllerClassName);
-        $methodKey = "{$controllerSpec->getControllerAction()}." . strtolower($request->getMethod());
-//         unset($controllerSpec['class_name']);
-//         $routeParameters = array_keys($controllerSpec);
         
-        if (isset($methods[$methodKey])) {
-            $method = $methods[$methodKey];
-            $callable = new \ReflectionMethod($controllerInstance, $method['name']);
-            $argumentDescription = $callable->getParameters();
-            $arguments = [];
-            
-            foreach($argumentDescription as $argument) {
-                if ($argument->getType()->isBuiltIn() && in_array($argument->getName(), $controllerSpec->identifyParameters())) {
-                    $arguments[] = $controllerSpec[$argument->getName()];
-                } else {
-                    $arguments[] = $this->bindParameter($argument, $container);
-                }
-            }
-            
-            $output = $callable->invokeArgs($controllerInstance, $arguments);
-            
-            return match(true) {
-                $output instanceof View => $response->withBody($output->asStream()),
-                $output instanceof ResponseInterface => $output,
-                gettype($output) === 'string' => $response->withBody(new StringStream($output)),
-                default => throw new NtentanException("Controller returned an unexpected " 
-                        . ($output === null ? "null output" : "object of type " .get_class($output)))
-            };
+        $method = $this->getActionMethod($controllerInstance, $controllerSpec, $request);
+        
+        if ($method === null) {
+            throw new NtentanException(
+                "Could not resolve a controller/method combination for the current request [{$request->getUri()->getPath()}]."
+            );
         }
         
-        throw new NtentanException(
-            "Could not resolve a controller/method combination for the current request [{$request->getUri()->getPath()}]."
-        );
+        $argumentDescription = $method->getParameters();
+        $arguments = [];
+        
+        foreach($argumentDescription as $argument) {
+            if ($argument->getType()->isBuiltIn() && in_array($argument->getName(), $controllerSpec->identifyParameters())) {
+                $arguments[] = $controllerSpec[$argument->getName()];
+            } else {
+                $arguments[] = $this->bindParameter($argument, $container);
+            }
+        }
+        
+        $output = $method->invokeArgs($controllerInstance, $arguments);
+        
+        return match(true) {
+            $output instanceof View => $response->withBody($output->asStream()),
+            $output instanceof ResponseInterface => $output,
+            gettype($output) === 'string' => $response->withBody(new StringStream($output)),
+            default => throw new NtentanException("Controller returned an unexpected " 
+                    . ($output === null ? "null output" : "object of type " .get_class($output)))
+        };
     }
     
     private function bindParameter(\ReflectionParameter $parameter, Container $container)
@@ -144,38 +141,47 @@ class MvcMiddleware implements Middleware
         return $this->router;
     }
     
-    private function getMethods(object $controller, string $className): array
+    private function getActionMethod(object $controller, ControllerSpec $controllerSpec, ServerRequestInterface $request): ?\ReflectionMethod
     {
         $methods = (new \ReflectionClass($controller))->getMethods(\ReflectionMethod::IS_PUBLIC);
-        $results = [];
+        $bestScore = 0;
+        $bestMethod = null;
+        
         foreach ($methods as $method) {
-            $methodName = $method->getName();
-
-            // Skip internal methods
-            if (substr($methodName, 0, 2) == '__') {
+            $currentScore = 0;
+            $actionAttribute = $method->getAttributes(Action::class);
+            $requestedAction = $controllerSpec->getControllerAction();
+            
+            if (empty($actionAttribute)) {
                 continue;
+            } else {
+                $actionPath = $actionAttribute[0]->newInstance()->getPath();
+                if($actionPath === "" && $requestedAction != $method->getName() 
+                    || $actionPath !== "" && $actionPath != $requestedAction) 
+                {
+                    continue;
+                }
             }
-            $action = $methodName;
-            $requestMethod = ".get";
+            
+            $attributes = array_reduce(
+                self::FILTER_ATTRIBUTES, fn($carry, $x) => array_merge($carry, $method->getAttributes($x)), []
+            );
 
-            foreach ($method->getAttributes() as $attribute) {
-                match($attribute->getName()) {
-                    Action::class => $action = $attribute->newInstance()->getPath(),
-                    Method::class => $requestMethod = "." . strtolower($attribute->newInstance()->getType()),
-                    default => null
-                };
+            foreach ($attributes as $attribute) {
+                if (!$attribute->newInstance()->match($request)) {
+                    $currentScore = -1;
+                    break;
+                }
+                $currentScore++;
             }
-
-            $methodKey = $action . $requestMethod;
-            if (isset($results[$methodKey]) && $method->class != $className) {
-                continue;
+            
+            if ($currentScore >= $bestScore) {
+                $bestMethod = $method;
+                $bestScore = $currentScore;
             }
-
-            $results[$methodKey] = [
-                'name' => $methodName
-            ];
         }
-        return $results;
+        
+        return $bestMethod;
     }
     
     #[\Override]

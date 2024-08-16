@@ -74,5 +74,23 @@ class ControllerSpec
     {
         return $this->parameters[$parameter];
     }
+
+    /**
+     * Get the keys of all the parameters in the controller spec.
+     * @return array
+     */
+    public function identifyParameters(): array
+    {
+        return array_keys($this->parameters);
+    }
+
+    /**
+     * Get all the parameters attached to the controller specification.
+     * @return array
+     */
+    public function getParameters(): array
+    {
+        return $this->parameters;
+    }
 }
 

@@ -1,20 +1,39 @@
 <?php
 namespace ntentan\mvc\binders;
 
+use ntentan\mvc\ControllerSpec;
 use ntentan\utils\Input;
 use ntentan\mvc\Model;
 use ntentan\http\Request;
 
 /**
- * This class is responsible for binding request data with standard ntentan models or classes.
+ * The default model binder assigns data from HTTP request and controller information to model fields.
+ * Values are bound to variables in the order of post data, URL query parameters, and routing information (coming from
+ * the router).
  */
 class DefaultModelBinder implements ModelBinderInterface
 {
+    /**
+     * An instance of the current request being proceseed.
+     * @var Request
+     */
     private Request $request;
-    
-    public function __construct(Request $request)
+
+    /**
+     * The specifications of the current controller being loaded.
+     * @var ControllerSpec
+     */
+    private ControllerSpec $controllerSpec;
+
+    /**
+     * Creates a new model binder for the current request.
+     * @param Request $request
+     * @param ControllerSpec $controllerSpec
+     */
+    public function __construct(Request $request, ControllerSpec $controllerSpec)
     {
         $this->request = $request;
+        $this->controllerSpec = $controllerSpec;
     }
 
     private function getModelFields(Model $object): array
@@ -36,16 +55,22 @@ class DefaultModelBinder implements ModelBinderInterface
         return $fields;
     }
 
-    #[\Override]
-    public function bind(mixed $instance): mixed
+    private function bindToData(mixed $instance, array $fields, array $data): void
     {
-        $fields = $this->getClassFields($instance);
-        $requestData = Input::post() + Input::get();
         foreach ($fields as $field) {
-            if (isset($requestData[$field])) {
-                $instance->$field = $requestData[$field];
+            if (isset($data[$field])) {
+                $instance->$field = $data[$field];
             }
         }
+    }
+
+    #[\Override]
+    public function bind(mixed $instance, string $name): mixed
+    {
+        $fields = $this->getClassFields($instance);
+        $this->bindToData($instance, $fields, $this->controllerSpec->getParameters());
+        $this->bindToData($instance, $fields, Input::get());
+        $this->bindToData($instance, $fields, Input::post());
         return $instance;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace ntentan\mvc;
 
+use ntentan\mvc\binders\ModelBinderInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\Middleware;
@@ -106,7 +107,7 @@ class MvcMiddleware implements Middleware
         
         foreach($argumentDescription as $argument) {
             if ($argument->getType()->isBuiltIn() && in_array($argument->getName(), $controllerSpec->identifyParameters())) {
-                $arguments[] = $controllerSpec[$argument->getName()];
+                $arguments[] = $controllerSpec->getParameter($argument->getName());
             } else {
                 $arguments[] = $this->bindParameter($argument, $container);
             }
@@ -122,7 +123,15 @@ class MvcMiddleware implements Middleware
                     . ($output === null ? "null output" : "object of type " .get_class($output)))
         };
     }
-    
+
+    /**
+     * Bind a value to the container.
+     *
+     * @param \ReflectionParameter $parameter
+     * @param Container $container
+     * @return mixed|null
+     * @throws \ntentan\panie\exceptions\ResolutionException
+     */
     private function bindParameter(\ReflectionParameter $parameter, Container $container)
     {
         $type = $parameter->getType();
@@ -131,9 +140,10 @@ class MvcMiddleware implements Middleware
         if (!($type instanceof \ReflectionNamedType)) {
             return null;
         }
-        
+
+        /** @var ModelBinderInterface $binder */
         $binder = $container->get($this->modelBinders->get($type->getName()));
-        return $binder->bind($container->get($type->getName()));
+        return $binder->bind($container->get($type->getName()), $parameter->getName());
     }
     
     protected function getRouter(): Router

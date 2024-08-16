@@ -29,7 +29,7 @@ class ViewBinder implements ModelBinderInterface
     }
 
     #[\Override]
-    public function bind(mixed $view): mixed 
+    public function bind(mixed $view, string $name): mixed
     {
         $className = $this->controllerSpec->getControllerName(); 
         $action = $this->controllerSpec->getControllerAction();

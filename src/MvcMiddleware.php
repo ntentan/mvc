@@ -2,6 +2,7 @@
 
 namespace ntentan\mvc;
 
+use ntentan\Context;
 use ntentan\mvc\binders\ModelBinderInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -32,10 +33,13 @@ class MvcMiddleware implements Middleware
 
     private string $namespace = 'app';
 
-    public function __construct(Router $router, ServiceContainerBuilder $containerBuilder)
+    private Context $context;
+
+    public function __construct(Router $router, ServiceContainerBuilder $containerBuilder, Context $context)
     {
         $this->router = $router;
         $this->containerBuilder = $containerBuilder;
+        $this->context = $context;
     }
     
     protected function getServiceContainer(ServerRequestInterface $request, ResponseInterface $response)
@@ -44,6 +48,11 @@ class MvcMiddleware implements Middleware
             $this->serviceContainer = $this->containerBuilder->getContainer($request, $response);
         }
         return $this->serviceContainer;
+    }
+
+    protected function getContext(): Context
+    {
+        return $this->context;
     }
     
     /**

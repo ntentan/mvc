@@ -11,6 +11,7 @@ use ntentan\honam\TemplateFileResolver;
 use ntentan\honam\TemplateRenderer;
 use ntentan\honam\Templates;
 use ntentan\panie\Container;
+use ntentan\sessions\SessionStore;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\http\Request;
@@ -24,11 +25,13 @@ use ntentan\mvc\binders\ViewBinder;
 class ServiceContainerBuilder
 {
     private Container $container;
+    private SessionStore $session;
     
-    public function __construct(string $home)
+    public function __construct(string $home, SessionStore $session)
     {
         $this->container = new Container();
         $this->container->provide("string", "home")->with(fn() => $home);
+        $this->session = $session;
     }
 
     public function getContainer(ServerRequestInterface $request, ResponseInterface $response)
@@ -61,7 +64,7 @@ class ServiceContainerBuilder
                 },
                 'singleton' => true
                 ],
-                TemplateRenderer::class => [
+            TemplateRenderer::class => [
                     function($container) {
                         /** @var EngineRegistry $engineRegistry */
                         $engineRegistry = $container->get(EngineRegistry::class);
@@ -78,7 +81,8 @@ class ServiceContainerBuilder
                     },
                     'singleton' => true
                     ],
-                ]);
+            SessionStore::class => [fn() => $this->session, 'singleton' => true]
+        ]);
         return $this->container;
     }
 }

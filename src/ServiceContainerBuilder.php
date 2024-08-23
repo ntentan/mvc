@@ -20,6 +20,7 @@ use ntentan\http\Uri;
 use ntentan\mvc\binders\ModelBinderRegistry;
 use ntentan\mvc\binders\DefaultModelBinder;
 use ntentan\mvc\binders\ViewBinder;
+use Psr\Http\Message\UriInterface;
 
 
 class ServiceContainerBuilder
@@ -42,6 +43,7 @@ class ServiceContainerBuilder
             Request::class => fn() => $request instanceof Request ? $request : null,
             Response::class => fn() => $response instanceof Response ? $response : null,
             Uri::class => fn() => $uri instanceof Uri ? $uri : null,
+            UriInterface::class => fn() => $uri,
             ServerRequestInterface::class => fn() => $request,
             ResponseInterface::class => fn() => $response,
             ModelBinderRegistry::class => [

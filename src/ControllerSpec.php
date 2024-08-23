@@ -72,7 +72,7 @@ class ControllerSpec
      */
     public function getParameter(string $parameter): mixed
     {
-        return $this->parameters[$parameter];
+        return $this->parameters[$parameter] ?? null;
     }
 
     /**

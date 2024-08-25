@@ -1,6 +1,7 @@
 <?php
 namespace ntentan\mvc;
 
+use ntentan\Context;
 use ntentan\honam\EngineRegistry;
 use ntentan\honam\engines\php\HelperVariable;
 use ntentan\honam\engines\php\Janitor;
@@ -27,11 +28,13 @@ class ServiceContainerBuilder
 {
     private Container $container;
     private SessionStore $session;
+    private Context $context;
     
-    public function __construct(string $home, SessionStore $session)
+    public function __construct(string $home, SessionStore $session, Context $context)
     {
         $this->container = new Container();
         $this->container->provide("string", "home")->with(fn() => $home);
+        $this->context = $context;
         $this->session = $session;
     }
 
@@ -39,6 +42,7 @@ class ServiceContainerBuilder
     {
         $uri = $request->getUri();
         $this->container->setup([
+            Context::class => [fn() => $this->context, 'singleton' => true],
             Templates::class => [Templates::class, 'singleton' => true],
             Request::class => fn() => $request instanceof Request ? $request : null,
             Response::class => fn() => $response instanceof Response ? $response : null,
@@ -74,11 +78,14 @@ class ServiceContainerBuilder
                         $templateRenderer = new TemplateRenderer($engineRegistry, $templateFileResolver);
                         $engineRegistry->registerEngine(['mustache'], $container->get(MustacheEngineFactory::class));
                         $engineRegistry->registerEngine(['smarty', 'tpl'], $container->get(SmartyEngineFactory::class));
+                        $helperVariable = new HelperVariable($templateRenderer, $container->get(TemplateFileResolver::class));
+                        $helperVariable->setUrlParameters(
+                            $container->get(UriInterface::class)->getPath(),
+                            $container->get(Context::class)->getPrefix()
+                        );
                         $engineRegistry->registerEngine(['tpl.php'],
-                            new PhpEngineFactory($templateRenderer,
-                                new HelperVariable($templateRenderer, $container->get(TemplateFileResolver::class)),
-                                $container->get(Janitor::class)
-                            ));
+                            new PhpEngineFactory($templateRenderer, $helperVariable, $container->get(Janitor::class))
+                        );
                         return $templateRenderer;
                     },
                     'singleton' => true

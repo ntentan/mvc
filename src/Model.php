@@ -25,6 +25,11 @@ class Model extends RecordWrapper
         return $instance;
     }
 
+    public static function load(string $name)
+    {
+        return ORMContext::getInstance()->load($name);
+    }
+
     public static function __callStatic($name, $arguments)
     {
         return call_user_func_array([self::createNew(), $name], $arguments);

@@ -22,6 +22,7 @@ use ntentan\mvc\binders\ModelBinderRegistry;
 use ntentan\mvc\binders\DefaultModelBinder;
 use ntentan\mvc\binders\ViewBinder;
 use Psr\Http\Message\UriInterface;
+use ntentan\Configuration;
 
 
 class ServiceContainerBuilder
@@ -90,7 +91,8 @@ class ServiceContainerBuilder
                     },
                     'singleton' => true
                     ],
-            SessionStore::class => [fn() => $this->session, 'singleton' => true]
+            SessionStore::class => [fn() => $this->session, 'singleton' => true],
+            '$ntentanConfig:array' => [Configuration::get(), 'singleton' => true]
         ]);
         return $this->container;
     }

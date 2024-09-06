@@ -152,7 +152,9 @@ class MvcMiddleware implements Middleware
 
         /** @var ModelBinderInterface $binder */
         $binder = $container->get($this->modelBinders->get($type->getName()));
-        return $binder->bind($container->get($type->getName()), $parameter->getName());
+        return $type->isBuiltin() ?
+            $container->get("\${$parameter->getName()}:{$type->getName()}") :
+            $binder->bind($container->get($type->getName()), $parameter->getName());
     }
     
     protected function getRouter(): Router
@@ -162,12 +164,16 @@ class MvcMiddleware implements Middleware
     
     private function getActionMethod(object $controller, ControllerSpec $controllerSpec, ServerRequestInterface $request): ?\ReflectionMethod
     {
-        $methods = (new \ReflectionClass($controller))->getMethods(\ReflectionMethod::IS_PUBLIC);
+        $controllerClass = new \ReflectionClass($controller);
+        $methods = $controllerClass->getMethods(\ReflectionMethod::IS_PUBLIC);
         $bestScore = 0;
         $bestMethod = null;
         
         foreach ($methods as $method) {
             $currentScore = 0;
+            if ($controllerClass->getName() === $method->getDeclaringClass()->getName()) {
+                $currentScore += 1;
+            }
             $actionAttribute = $method->getAttributes(Action::class);
             $requestedAction = $controllerSpec->getControllerAction();
             

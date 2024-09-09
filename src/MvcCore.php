@@ -1,6 +1,7 @@
 <?php
 namespace ntentan\mvc;
 
+use ntentan\Context;
 use ntentan\mvc\binders\ModelBinderRegistry;
 use ntentan\mvc\binders\ViewBinder;
 use ntentan\mvc\binders\DefaultModelBinder;
@@ -58,7 +59,7 @@ class MvcCore {
                     $instance = new MvcMiddleware(
                         $container->get(Router::class), 
                         $container->get(ServiceContainerBuilder::class), 
-                        $container->get(ModelBinderRegistry::class)
+                        $container->get(Context::class)
                     );
                     $instance->setNamespace($namespace);
                     self::initializeDatabase(); 

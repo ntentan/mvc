@@ -4,30 +4,36 @@ namespace ntentan\mvc;
 
 use ntentan\nibii\interfaces\ModelFactoryInterface;
 use ntentan\nibii\ORMContext;
+use ntentan\nibii\RecordWrapper;
+use ntentan\nibii\Relationship;
 use ntentan\utils\Text;
 
 class MvcModelFactory implements ModelFactoryInterface
 {
-    private $context;
+    private string $namespace;
 
-    public function createModel($name, $context)
+    public function __construct(string $namespace)
     {
-        $namespace = $this->context->getNamespace();
-        if ($context == nibii\Relationship::BELONGS_TO) {
-            $name = Text::pluralize($name);
-        }
-        $className = "\\{$namespace}\\models\\" . Text::ucamelize($name);
-        return new $className;
+        $this->namespace = $namespace;
     }
 
-    public function getModelTable($instance)
+    public function createModel(string $name, string $context): RecordWrapper
+    {
+        if ($context == Relationship::BELONGS_TO) {
+            $name = Text::pluralize($name);
+        }
+        $className = "\\{$this->namespace}\\models\\" . Text::ucamelize($name);
+        return new $className();
+    }
+
+    public function getModelTable(RecordWrapper $instance): string
     {
         $class = new \ReflectionClass($instance);
         $nameParts = explode("\\", $class->getName());
         return Text::deCamelize(end($nameParts));
     }
     
-    public function getJunctionClassName($classA, $classB)
+    public function getJunctionClassName(string $classA, string $classB): string
     {
         $classBParts = explode('\\', substr($this->getClassName($classB), 1));
         $classAParts = explode('\\', $classA);
@@ -48,9 +54,8 @@ class MvcModelFactory implements ModelFactoryInterface
         return implode('\\', $joinerParts);
     }
 
-    public function getClassName($model)
+    public function getClassName(string $model): string
     {
-        $namespace = $this->context->getNamespace();
-        return "\\{$namespace}\\models\\" . Text::ucamelize($model);
+        return "\\{$this->namespace}\\models\\" . Text::ucamelize($model);
     }
 }

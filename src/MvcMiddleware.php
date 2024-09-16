@@ -107,7 +107,11 @@ class MvcMiddleware implements Middleware
         
         if ($method === null) {
             throw new NtentanException(
-                "Could not resolve a controller/method combination for the current request [{$request->getUri()->getPath()}]."
+                <<<MSG
+                Could not resolve a controller/method combination for the current request 
+                [{$request->getUri()->getPath()}]. Looking for the controller [{$controllerSpec->getControllerClass()}]
+                and a method [{$controllerSpec->getControllerAction()}].
+                MSG
             );
         }
         

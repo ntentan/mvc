@@ -68,7 +68,7 @@ class MvcCore {
                 'singleton' => true
             ],
             
-            ModelFactoryInterface::class => [DefaultModelFactory::class, 'singleton' => true],
+            ModelFactoryInterface::class => [MvcModelFactory::class, 'singleton' => true],
             
             ValidatorFactoryInterface::class => [DefaultValidatorFactory::class, 'singleton' => true],
             

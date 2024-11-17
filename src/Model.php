@@ -17,7 +17,7 @@ class Model extends RecordWrapper
      * Create a new instance of this Model
      * @return \ntentan\nibii\RecordWrapper
      */
-    public static function createNew()
+    public static function createNew(): self
     {
         $class = get_called_class();
         $instance = new $class();
@@ -58,14 +58,6 @@ class Model extends RecordWrapper
     {
         $dbStore = $this->getDBStoreInformation();
         return "{$dbStore['quoted_table']}";
-    }
-
-    /**
-     * @return Driver
-     */
-    public function getDriver()
-    {
-        return $this->getAdapter()->getDriver();
     }
 
     public function __serialize()

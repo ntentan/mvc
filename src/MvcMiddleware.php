@@ -185,7 +185,8 @@ class MvcMiddleware implements Middleware
                 continue;
             } else {
                 $actionPath = $actionAttribute[0]->newInstance()->getPath();
-                if($actionPath === "" && $requestedAction != $method->getName() 
+                if($actionPath === "" && $requestedAction != $method->getName()
+                    && Text::camelize($requestedAction) != $method->getName()
                     || $actionPath !== "" && $actionPath != $requestedAction) 
                 {
                     continue;

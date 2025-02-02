@@ -82,10 +82,13 @@ class MvcCore {
             ],
             
             ServiceContainerBuilder::class => [
-                function($container) {
+                function($container) use ($bindings) {
                     $home = $container->get("\$home:string");
                     $sessionStore = $container->get(SessionStore::class);
                     $context = $container->get(Context::class);
+                    $containerBuilder = new ServiceContainerBuilder($home, $sessionStore, $context);
+                    $containerBuilder->addBindings($bindings);
+                    return $containerBuilder;
                 },
                 'singleton' => true
             ]

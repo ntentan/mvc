@@ -13,6 +13,7 @@ use ntentan\honam\TemplateRenderer;
 use ntentan\honam\Templates;
 use ntentan\panie\Container;
 use ntentan\sessions\SessionStore;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\http\Request;
@@ -41,9 +42,14 @@ class ServiceContainerBuilder
         $this->session = $session;
     }
 
-    public function addAdditionalBindings(array $bindings): void
+    public function addBindings(array $bindings): void
     {
-        $this->bindings = array_merge([
+        $this->bindings = $bindings;
+    }
+
+    private function getBindings(UriInterface $uri, RequestInterface $request, ResponseInterface $response): array
+    {
+        return array_merge([
             Context::class => [fn() => $this->context, 'singleton' => true],
             Templates::class => [Templates::class, 'singleton' => true],
             Request::class => fn() => $request instanceof Request ? $request : null,
@@ -94,13 +100,12 @@ class ServiceContainerBuilder
             ],
             SessionStore::class => [fn() => $this->session, 'singleton' => true],
             '$ntentanConfig:array' => [Configuration::get(), 'singleton' => true]
-        ], $bindings);
+        ], $this->bindings);
     }
 
     public function getContainer(ServerRequestInterface $request, ResponseInterface $response): Container
     {
-        $uri = $request->getUri();
-        $this->container->setup($this->bindings);
+        $this->container->setup($this->getBindings($request->getUri(), $request, $response));
         return $this->container;
     }
 }

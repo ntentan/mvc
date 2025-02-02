@@ -18,6 +18,7 @@ use ntentan\nibii\factories\DefaultValidatorFactory;
 use ntentan\atiaa\DbContext;
 use ntentan\atiaa\DriverFactory;
 use ntentan\kaikai\Cache;
+use ntentan\sessions\SessionStore;
 
 
 class MvcCore {
@@ -49,7 +50,7 @@ class MvcCore {
      * 
      * @return array
      */
-    public static function configure(Container $container, string $namespace): array 
+    public static function configure(Container $container, string $namespace, array $bindings = []): array
     {         
         self::$container = $container;
         
@@ -80,7 +81,14 @@ class MvcCore {
                 'singleton' => true
             ],
             
-            ServiceContainerBuilder::class => ['singleton' => true]
+            ServiceContainerBuilder::class => [
+                function($container) {
+                    $home = $container->get("\$home:string");
+                    $sessionStore = $container->get(SessionStore::class);
+                    $context = $container->get(Context::class);
+                },
+                'singleton' => true
+            ]
         ];
     }
 }

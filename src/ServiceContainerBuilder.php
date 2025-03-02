@@ -57,6 +57,7 @@ class ServiceContainerBuilder
             Uri::class => fn() => $uri instanceof Uri ? $uri : null,
             UriInterface::class => fn() => $uri,
             ServerRequestInterface::class => fn() => $request,
+            RequestInterface::class => fn() => $request,
             ResponseInterface::class => fn() => $response,
             ModelBinderRegistry::class => [
                 function(Container $container) {

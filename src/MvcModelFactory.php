@@ -6,6 +6,7 @@ use ntentan\nibii\interfaces\ModelFactoryInterface;
 use ntentan\nibii\ORMContext;
 use ntentan\nibii\RecordWrapper;
 use ntentan\nibii\Relationship;
+use ntentan\nibii\relationships\RelationshipType;
 use ntentan\utils\Text;
 
 class MvcModelFactory implements ModelFactoryInterface
@@ -17,9 +18,9 @@ class MvcModelFactory implements ModelFactoryInterface
         $this->namespace = $namespace;
     }
 
-    public function createModel(string $name, string $context): RecordWrapper
+    public function createModel(string $name, RelationshipType $context): RecordWrapper
     {
-        if ($context == Relationship::BELONGS_TO) {
+        if ($context == RelationshipType::BELONGS_TO) {
             $name = Text::pluralize($name);
         }
         $className = "\\{$this->namespace}\\models\\" . Text::ucamelize($name);

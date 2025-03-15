@@ -1,3 +1,13 @@
+v0.3.0 - 2025-03-15
+===================
+Fixed
+-----
+- Access to the `RequestInterface` was bound to the internal `Request` object.
+
+Updated
+-------
+- The internal references to nibii refences were updated to conform with the new `RelationshipType` enumeration.
+
 v0.2.0 - 2025-02-02
 ===================
 Added

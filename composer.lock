@@ -150,16 +150,16 @@
         },
         {
             "name": "ntentan/nibii",
-            "version": "v0.10.1",
+            "version": "v0.11.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ntentan/nibii.git",
-                "reference": "4324ad3a2bcc11246ba7a6d5635238d3fb51ca01"
+                "reference": "91028a377ba81f19b257b02a0bdeb7b7bfdc85c4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ntentan/nibii/zipball/4324ad3a2bcc11246ba7a6d5635238d3fb51ca01",
-                "reference": "4324ad3a2bcc11246ba7a6d5635238d3fb51ca01",
+                "url": "https://api.github.com/repos/ntentan/nibii/zipball/91028a377ba81f19b257b02a0bdeb7b7bfdc85c4",
+                "reference": "91028a377ba81f19b257b02a0bdeb7b7bfdc85c4",
                 "shasum": ""
             },
             "require": {
@@ -191,22 +191,22 @@
             "description": "ORM for ntentan",
             "support": {
                 "issues": "https://github.com/ntentan/nibii/issues",
-                "source": "https://github.com/ntentan/nibii/tree/v0.10.1"
+                "source": "https://github.com/ntentan/nibii/tree/v0.11.0"
             },
-            "time": "2025-01-21T00:55:09+00:00"
+            "time": "2025-03-15T16:14:34+00:00"
         },
         {
             "name": "ntentan/ntentan",
-            "version": "v0.9.0",
+            "version": "v0.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ntentan/ntentan.git",
-                "reference": "000210f5125347aa01c2129ef308742061dc39ba"
+                "reference": "4d2442f0ceeed4140c02291f2e8ea81f12ca095a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ntentan/ntentan/zipball/000210f5125347aa01c2129ef308742061dc39ba",
-                "reference": "000210f5125347aa01c2129ef308742061dc39ba",
+                "url": "https://api.github.com/repos/ntentan/ntentan/zipball/4d2442f0ceeed4140c02291f2e8ea81f12ca095a",
+                "reference": "4d2442f0ceeed4140c02291f2e8ea81f12ca095a",
                 "shasum": ""
             },
             "require": {
@@ -239,9 +239,9 @@
             "description": "Another PHP application framework.",
             "support": {
                 "issues": "https://github.com/ntentan/ntentan/issues",
-                "source": "https://github.com/ntentan/ntentan/tree/v0.9.0"
+                "source": "https://github.com/ntentan/ntentan/tree/v0.9.1"
             },
-            "time": "2025-01-19T04:09:11+00:00"
+            "time": "2025-03-15T16:06:34+00:00"
         },
         {
             "name": "ntentan/panie",

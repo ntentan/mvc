@@ -2,8 +2,10 @@
 
 namespace ntentan\mvc;
 
+use ntentan\mvc\exceptions\ParameterNotFoundException;
 use ntentan\Context;
 use ntentan\mvc\binders\ModelBinderInterface;
+use ntentan\panie\exceptions\ResolutionException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\Middleware;
@@ -143,9 +145,9 @@ class MvcMiddleware implements Middleware
      * @param \ReflectionParameter $parameter
      * @param Container $container
      * @return mixed|null
-     * @throws \ntentan\panie\exceptions\ResolutionException
+     * @throws \ntentan\panie\exceptions\ResolutionException|ParameterNotFoundException
      */
-    private function bindParameter(\ReflectionParameter $parameter, Container $container)
+    private function bindParameter(\ReflectionParameter $parameter, Container $container): mixed
     {
         $type = $parameter->getType();
         
@@ -156,9 +158,15 @@ class MvcMiddleware implements Middleware
 
         /** @var ModelBinderInterface $binder */
         $binder = $container->get($this->modelBinders->get($type->getName()));
-        return $type->isBuiltin() ?
-            $container->get("\${$parameter->getName()}:{$type->getName()}") :
-            $binder->bind($container->get($type->getName()), $parameter->getName());
+
+        try {
+            return $type->isBuiltin() ?
+                $container->get("\${$parameter->getName()}:{$type->getName()}") :
+                $binder->bind($container->get($type->getName()), $parameter->getName());
+
+        } catch (ResolutionException $exception) {
+            throw new ParameterNotFoundException($parameter, $exception);
+        }
     }
     
     protected function getRouter(): Router

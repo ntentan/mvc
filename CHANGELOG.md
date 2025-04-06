@@ -1,3 +1,7 @@
+v0.4.0 - 2025-04-06
+===================
+- Adding better exception handling for cases where parameters are not found.
+
 v0.3.0 - 2025-03-15
 ===================
 Fixed

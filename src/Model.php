@@ -2,9 +2,7 @@
 
 namespace ntentan\mvc;
 
-use ntentan\atiaa\DbContext;
 use ntentan\nibii\RecordWrapper;
-use ntentan\atiaa\Driver;
 use ntentan\nibii\ORMContext;
 
 /**
@@ -29,21 +27,6 @@ class Model extends RecordWrapper
     public static function load(string $name)
     {
         return ORMContext::getInstance()->load($name);
-    }
-
-    public static function beginTransaction(): void
-    {
-        DbContext::getInstance()->getDriver()->beginTransaction();
-    }
-
-    public static function commitTransaction(): void
-    {
-        DbContext::getInstance()->getDriver()->commit();
-    }
-
-    public static function rollbackTransaction(): void
-    {
-        DbContext::getInstance()->getDriver()->rollback();
     }
 
     public static function __callStatic($name, $arguments)

@@ -67,7 +67,7 @@ class MvcMiddleware implements Middleware
     protected function getControllerSpec(ServerRequestInterface $request): ControllerSpec
     {
         $uri = $request->getUri();
-        $parameters = $this->router->route($uri->getPath(), $uri->getQuery());
+        $parameters = $this->router->route($uri->getPath());
         $controllerSpec = new ControllerSpec(
             sprintf('\%s\controllers\%sController', $this->namespace, Text::ucamelize($parameters['controller'])),
             $parameters['action'], $parameters['controller'], $parameters

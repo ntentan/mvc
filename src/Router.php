@@ -2,6 +2,7 @@
 namespace ntentan\mvc;
 
 use ntentan\exceptions\RouteExistsException;
+use ntentan\exceptions\RouteNotAvailableException;
 
 /**
  * Provides default routing logic that loads controllers based on URLs passed to the framework.
@@ -30,13 +31,11 @@ class Router
      * Invoke the router to load a route.
      *
      * @param string $route
-     * @param string $prefix
      * @return array
+     * @throws RouteNotAvailableException
      */
-    public function route(string $path, string $query, string $prefix = ""): array
+    public function route(string $route): array
     {
-        $route = substr($path, strlen($prefix));
-
         // Go through predefined routes till a match is found
         foreach ($this->routeOrder as $routeName) {
             $routeDescription = $this->routes[$routeName];
@@ -45,6 +44,9 @@ class Router
                 return $this->fillInDefaultParameters($routeDescription, $parameters);
             }
         }
+
+        // We didn't find a match throw an exception
+        throw new RouteNotAvailableException("Failed to find a route for the requested path \"{$path}\"");
     }
 
     private function fillInDefaultParameters($routeDescription, $parameters)
@@ -57,12 +59,12 @@ class Router
         return $parameters;
     }
 
-    private function match($route, $description)
+    private function match($route, $description): array|false
     {
         $parameters = [];
         if (preg_match("|^{$description['regexp']}$|i", urldecode($route), $matches)) {
             foreach ($matches as $key => $value) {
-                if (!is_numeric($key) && $value != "") {
+                if (!is_numeric($key)) {
                     $parameters[$key] = $value;
                 }
             }
@@ -85,7 +87,7 @@ class Router
                     "(?<{$matches['name']}%s>[a-z0-9_.~:#[\]@!$&'()*+,;=%s\s-]+)?",
                     $matches['prefix'] == '#' ? '____array' : null, $matches['prefix'] != '' ? "\-/_" : null
                 );
-            }, str_replace('/', '(/)?', $pattern)
+            }, str_replace('/', '(/)+', $pattern)
         );
 
         $this->routes[$name] = [

@@ -88,7 +88,7 @@ class Router
                      $matches['prefix'] != '' ? "\-/_" : null
                 );
             },
-            str_replace('/', '(/)+', $pattern)
+            str_replace('/', '(/)*', $pattern)
         );
 
         $this->routes[$name] = [

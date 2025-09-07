@@ -1,4 +1,4 @@
-v0.4.1 - 2025-04-06
+v0.4.1 - 2025-09-07
 ===================
 - Fixes a bug which prevents multiple slashes from being put in a URL.
 - Updates the dependencies.

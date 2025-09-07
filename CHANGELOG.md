@@ -1,3 +1,9 @@
+v0.4.1 - 2025-04-06
+===================
+- Fixes a bug which prevents multiple slashes from being put in a URL.
+- Updates the dependencies.
+
+
 v0.4.0 - 2025-04-06
 ===================
 - Adding better exception handling for cases where parameters are not found.

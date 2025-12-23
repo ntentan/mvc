@@ -8,7 +8,7 @@ use ntentan\mvc\binders\ModelBinderInterface;
 use ntentan\panie\exceptions\ResolutionException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use ntentan\Middleware;
+use ntentan\middleware\Middleware;
 use ntentan\panie\Container;
 use ntentan\utils\Text;
 use ntentan\exceptions\NtentanException;

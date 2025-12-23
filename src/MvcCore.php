@@ -23,22 +23,20 @@ use ntentan\sessions\SessionStore;
 
 class MvcCore {
     
-    private static Container $container;
-    
     /**
      * Initialize database subsystem of the MVC middleware.
      * This is useful in cases where the Model infrastructure is needed outside of the MVC system. The 
      * `configureAndGetWiring` method must be called to setup all parameters before this method is called. 
      */
-    public static function initializeDatabase(): void
+    public static function initializeDatabase(Container $container): void
     {
-        $configuration = self::$container->get('$ntentanConfig:array');
+        $configuration = $container->get('$ntentanConfig:array');
         if (isset($configuration['db'])) {
             ORMContext::initialize(
-                    self::$container->get(ModelFactoryInterface::class),
-                    self::$container->get(DriverAdapterFactoryInterface::class),
-                    self::$container->get(ValidatorFactoryInterface::class),
-                    self::$container->get(Cache::class)
+                    $container->get(ModelFactoryInterface::class),
+                    $container->get(DriverAdapterFactoryInterface::class),
+                    $container->get(ValidatorFactoryInterface::class),
+                    $container->get(Cache::class)
                 );
             DbContext::initialize(new DriverFactory($configuration['db']));
         } 
@@ -50,10 +48,8 @@ class MvcCore {
      * 
      * @return array
      */
-    public static function configure(Container $container, string $namespace, array $bindings = []): array
-    {         
-        self::$container = $container;
-        
+    public static function configure(string $namespace, array $bindings = []): array
+    {
         return [
             MvcMiddleware::class => [
                 function(Container $container) use ($namespace) {
@@ -63,7 +59,7 @@ class MvcCore {
                         $container->get(Context::class)
                     );
                     $instance->setNamespace($namespace);
-                    self::initializeDatabase(); 
+                    self::initializeDatabase($container);
                     return $instance;
                 },
                 'singleton' => true

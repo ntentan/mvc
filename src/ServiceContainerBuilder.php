@@ -99,8 +99,7 @@ class ServiceContainerBuilder
                 },
                 'singleton' => true
             ],
-            SessionStore::class => [fn() => $this->session, 'singleton' => true],
-            '$ntentanConfig:array' => [Configuration::get(), 'singleton' => true]
+            SessionStore::class => [fn() => $this->session, 'singleton' => true]
         ], $this->bindings);
     }
 

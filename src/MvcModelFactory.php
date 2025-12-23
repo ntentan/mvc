@@ -3,9 +3,7 @@
 namespace ntentan\mvc;
 
 use ntentan\nibii\interfaces\ModelFactoryInterface;
-use ntentan\nibii\ORMContext;
 use ntentan\nibii\RecordWrapper;
-use ntentan\nibii\Relationship;
 use ntentan\nibii\relationships\RelationshipType;
 use ntentan\utils\Text;
 

@@ -1,3 +1,9 @@
+v0.4.2 - 2925-12-23
+===================
+- Adapts MVC core to be compatibile with the new Ntentan structure.
+- Updates the dependencies
+
+
 v0.4.1 - 2025-09-07
 ===================
 - Fixes a bug which prevents multiple slashes from being put in a URL.

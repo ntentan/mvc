@@ -3,6 +3,7 @@ namespace ntentan\mvc;
 
 use ntentan\Context;
 use ntentan\honam\EngineRegistry;
+use ntentan\honam\engines\php\HelperFactory;
 use ntentan\honam\engines\php\HelperVariable;
 use ntentan\honam\engines\php\Janitor;
 use ntentan\honam\factories\MustacheEngineFactory;
@@ -79,6 +80,16 @@ class ServiceContainerBuilder
                 },
                 'singleton' => true
             ],
+            HelperFactory::class => [
+                function($container) {
+                    /** @var UriInterface $uri */
+                    $uri = $container->get(UriInterface::class);
+                    /** @var Context $context */
+                    $context = $container->get(Context::class);
+                    return new HelperFactory($uri->getPath(), $context->getPrefix());
+                },
+                'singleton' => true
+            ],
             TemplateRenderer::class => [
                 function($container) {
                     /** @var EngineRegistry $engineRegistry */
@@ -87,11 +98,7 @@ class ServiceContainerBuilder
                     $templateRenderer = new TemplateRenderer($engineRegistry, $templateFileResolver);
                     $engineRegistry->registerEngine(['mustache'], $container->get(MustacheEngineFactory::class));
                     $engineRegistry->registerEngine(['smarty', 'tpl'], $container->get(SmartyEngineFactory::class));
-                    $helperVariable = new HelperVariable($templateRenderer, $container->get(TemplateFileResolver::class));
-                    $helperVariable->setUrlParameters(
-                        $container->get(UriInterface::class)->getPath(),
-                        $container->get(Context::class)->getPrefix()
-                    );
+                    $helperVariable = new HelperVariable($this->container->get(HelperFactory::class), $templateRenderer);
                     $engineRegistry->registerEngine(['tpl.php'],
                         new PhpEngineFactory($templateRenderer, $helperVariable, $container->get(Janitor::class))
                     );

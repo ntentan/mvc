@@ -54,16 +54,16 @@
         },
         {
             "name": "ntentan/honam",
-            "version": "v0.9.1",
+            "version": "v0.10.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ntentan/honam.git",
-                "reference": "35b879e3698d95e7346a5ea075645994319b5218"
+                "reference": "b35a33d8fe24b5f144a026cc6583eed2ee0e274d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ntentan/honam/zipball/35b879e3698d95e7346a5ea075645994319b5218",
-                "reference": "35b879e3698d95e7346a5ea075645994319b5218",
+                "url": "https://api.github.com/repos/ntentan/honam/zipball/b35a33d8fe24b5f144a026cc6583eed2ee0e274d",
+                "reference": "b35a33d8fe24b5f144a026cc6583eed2ee0e274d",
                 "shasum": ""
             },
             "require": {
@@ -101,9 +101,9 @@
             "description": "The views component of the ntentan framework.",
             "support": {
                 "issues": "https://github.com/ntentan/honam/issues",
-                "source": "https://github.com/ntentan/honam/tree/v0.9.1"
+                "source": "https://github.com/ntentan/honam/tree/v0.10.2"
             },
-            "time": "2025-09-07T21:13:59+00:00"
+            "time": "2026-01-10T04:53:24+00:00"
         },
         {
             "name": "ntentan/kaikai",
@@ -292,16 +292,16 @@
         },
         {
             "name": "ntentan/utils",
-            "version": "v0.13.0",
+            "version": "v0.13.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ntentan/utils.git",
-                "reference": "d863bea03b5086d3e251650b0733bbe381acb8f4"
+                "reference": "c840347e219f7873f09611922b2401947c1bbaec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ntentan/utils/zipball/d863bea03b5086d3e251650b0733bbe381acb8f4",
-                "reference": "d863bea03b5086d3e251650b0733bbe381acb8f4",
+                "url": "https://api.github.com/repos/ntentan/utils/zipball/c840347e219f7873f09611922b2401947c1bbaec",
+                "reference": "c840347e219f7873f09611922b2401947c1bbaec",
                 "shasum": ""
             },
             "require-dev": {
@@ -329,9 +329,9 @@
             "description": "Common utility functions shared accross the ntentan framework.",
             "support": {
                 "issues": "https://github.com/ntentan/utils/issues",
-                "source": "https://github.com/ntentan/utils/tree/v0.13.0"
+                "source": "https://github.com/ntentan/utils/tree/v0.13.2"
             },
-            "time": "2024-07-13T15:26:35+00:00"
+            "time": "2026-01-02T05:56:24+00:00"
         },
         {
             "name": "psr/container",

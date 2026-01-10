@@ -1,4 +1,8 @@
-v0.4.2 - 2925-12-23
+v0.4.3 - 2026-01-10
+===================
+- Fixes an issue with how the template helper is loaded in the MVC environment.
+
+v0.4.2 - 2025-12-23
 ===================
 - Adapts MVC core to be compatibile with the new Ntentan structure.
 - Updates the dependencies

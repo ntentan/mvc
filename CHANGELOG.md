@@ -1,3 +1,7 @@
+v0.4.4 - 2026-02-19
+===================
+- Removes the Janitor dependency from the PHP engine factory.
+
 v0.4.3 - 2026-01-10
 ===================
 - Fixes an issue with how the template helper is loaded in the MVC environment.

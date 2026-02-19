@@ -5,7 +5,6 @@ use ntentan\Context;
 use ntentan\honam\EngineRegistry;
 use ntentan\honam\engines\php\HelperFactory;
 use ntentan\honam\engines\php\HelperVariable;
-use ntentan\honam\engines\php\Janitor;
 use ntentan\honam\factories\MustacheEngineFactory;
 use ntentan\honam\factories\PhpEngineFactory;
 use ntentan\honam\factories\SmartyEngineFactory;
@@ -99,9 +98,7 @@ class ServiceContainerBuilder
                     $engineRegistry->registerEngine(['mustache'], $container->get(MustacheEngineFactory::class));
                     $engineRegistry->registerEngine(['smarty', 'tpl'], $container->get(SmartyEngineFactory::class));
                     $helperVariable = new HelperVariable($this->container->get(HelperFactory::class), $templateRenderer);
-                    $engineRegistry->registerEngine(['tpl.php'],
-                        new PhpEngineFactory($templateRenderer, $helperVariable, $container->get(Janitor::class))
-                    );
+                    $engineRegistry->registerEngine(['tpl.php'], new PhpEngineFactory($templateRenderer, $helperVariable));
                     return $templateRenderer;
                 },
                 'singleton' => true

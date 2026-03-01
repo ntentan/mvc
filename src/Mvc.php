@@ -15,12 +15,12 @@ use ntentan\kaikai\Cache;
 use ntentan\sessions\SessionStore;
 
 
-class MvcCore {
-    
+class Mvc {
+
     /**
      * Initialize database subsystem of the MVC middleware.
-     * This is useful in cases where the Model infrastructure is needed outside of the MVC system. The 
-     * `configureAndGetWiring` method must be called to setup all parameters before this method is called. 
+     * This is useful in cases where the Model infrastructure is needed outside of the MVC system. The
+     * `configureAndGetWiring` method must be called to setup all parameters before this method is called.
      */
     public static function initializeDatabase(Container $container): void
     {
@@ -33,9 +33,9 @@ class MvcCore {
                     $container->get(Cache::class)
                 );
             DbContext::initialize(new DriverFactory($configuration['db']));
-        } 
+        }
     }
-    
+
     /**
      * Get the MVC middleware's container configuration. 
      * Passing the output of
@@ -53,7 +53,6 @@ class MvcCore {
                         $container->get(Context::class)
                     );
                     $instance->setNamespace($namespace);
-                    self::initializeDatabase($container);
                     return $instance;
                 },
                 'singleton' => true

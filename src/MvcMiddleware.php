@@ -33,15 +33,16 @@ class MvcMiddleware implements Middleware
     
     private Container $serviceContainer;
 
-    private string $namespace = 'app';
+    private string $namespace;
 
     private Context $context;
 
-    public function __construct(Router $router, ServiceContainerBuilder $containerBuilder, Context $context)
+    public function __construct(Router $router, ServiceContainerBuilder $containerBuilder, Context $context, string $namespace = 'app')
     {
         $this->router = $router;
         $this->containerBuilder = $containerBuilder;
         $this->context = $context;
+        $this->namespace = $namespace;
     }
     
     protected function getServiceContainer(ServerRequestInterface $request, ResponseInterface $response)

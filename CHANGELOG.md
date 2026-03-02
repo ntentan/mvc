@@ -1,3 +1,10 @@
+v0.4.5 - 2026-03-02
+===================
+- Changes how databases are initialized.
+- Added support for custom namespaces in `MvcMiddleware`.
+- Fixed a bug in `Router` where an incorrect variable was used in an exception message.
+- Updated type hints in `Router`.
+
 v0.4.4 - 2026-02-19
 ===================
 - Removes the Janitor dependency from the PHP engine factory.

@@ -46,7 +46,7 @@ class Router
         }
 
         // We didn't find a match throw an exception
-        throw new RouteNotAvailableException("Failed to find a route for the requested path \"{$path}\"");
+        throw new RouteNotAvailableException("Failed to find a route for the requested path \"{$route}\"");
     }
 
     private function fillInDefaultParameters($routeDescription, $parameters)
@@ -59,7 +59,7 @@ class Router
         return $parameters;
     }
 
-    private function match($route, $description): array|false
+    private function match($route, $description): array|bool
     {
         $parameters = [];
         if (preg_match("|^{$description['regexp']}$|i", urldecode($route), $matches)) {
@@ -132,4 +132,3 @@ class Router
         }
     }
 }
-

@@ -58,7 +58,11 @@ class Mvc {
                 'singleton' => true
             ],
             
-            ModelFactoryInterface::class => [MvcModelFactory::class, 'singleton' => true],
+            ModelFactoryInterface::class => [
+                function(Container $container) use ($namespace) {
+                    return new MvcModelFactory($namespace, $container->get(ServiceContainerBuilder::class)->getContainer());
+                }
+            ], //MvcModelFactory::class, 'singleton' => true],
             
             ValidatorFactoryInterface::class => [DefaultValidatorFactory::class, 'singleton' => true],
             

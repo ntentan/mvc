@@ -6,23 +6,29 @@ use ntentan\nibii\interfaces\ModelFactoryInterface;
 use ntentan\nibii\RecordWrapper;
 use ntentan\nibii\relationships\RelationshipType;
 use ntentan\utils\Text;
+use Psr\Container\ContainerInterface;
 
 class MvcModelFactory implements ModelFactoryInterface
 {
     private string $namespace;
+    private ContainerInterface $serviceContainer;
 
-    public function __construct(string $namespace)
+    public function __construct(string $namespace, ContainerInterface $serviceContainer)
     {
         $this->namespace = $namespace;
+        $this->serviceContainer = $serviceContainer;
     }
 
     public function createModel(string $name, RelationshipType $context): RecordWrapper
     {
+        if (class_exists($name)) {
+            return $this->serviceContainer->get($name);
+        }
+
         if ($context == RelationshipType::BELONGS_TO) {
             $name = Text::pluralize($name);
         }
-        $className = "\\{$this->namespace}\\models\\" . Text::ucamelize($name);
-        return new $className();
+        return $this->serviceContainer->get($this->getClassName($name));
     }
 
     public function getModelTable(RecordWrapper $instance): string

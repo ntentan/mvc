@@ -48,7 +48,8 @@ class MvcMiddleware implements Middleware
     protected function getServiceContainer(ServerRequestInterface $request, ResponseInterface $response)
     {
         if(!isset($this->serviceContainer)) {
-            $this->serviceContainer = $this->containerBuilder->getContainer($request, $response);
+            $this->containerBuilder->setRequestDetails($request, $response);
+            $this->serviceContainer = $this->containerBuilder->getContainer();
         }
         return $this->serviceContainer;
     }

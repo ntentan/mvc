@@ -31,7 +31,7 @@ class ServiceContainerBuilder
     private Container $container;
     private SessionStore $session;
     private Context $context;
-
+    private bool $setup;
     private array $bindings = [];
     
     public function __construct(string $home, SessionStore $session, Context $context)
@@ -40,6 +40,7 @@ class ServiceContainerBuilder
         $this->container->provide("string", "home")->with(fn() => $home);
         $this->context = $context;
         $this->session = $session;
+        $this->setup = false;
     }
 
     public function addBindings(array $bindings): void
@@ -47,18 +48,39 @@ class ServiceContainerBuilder
         $this->bindings = $bindings;
     }
 
-    private function getBindings(UriInterface $uri, RequestInterface $request, ResponseInterface $response): array
+    private function getRequestBindings(ServerRequestInterface $request, ResponseInterface $response): array
     {
-        return array_merge([
-            Context::class => [fn() => $this->context, 'singleton' => true],
-            Templates::class => [Templates::class, 'singleton' => true],
+        $uri = $request->getUri();
+        return [
             Request::class => fn() => $request instanceof Request ? $request : null,
-            Response::class => fn() => $response instanceof Response ? $response : null,
-            Uri::class => fn() => $uri instanceof Uri ? $uri : null,
-            UriInterface::class => fn() => $uri,
             ServerRequestInterface::class => fn() => $request,
             RequestInterface::class => fn() => $request,
             ResponseInterface::class => fn() => $response,
+            Response::class => fn() => $response instanceof Response ? $response : null,
+            Uri::class => fn() => $uri instanceof Uri ? $uri : null,
+            UriInterface::class => fn() => $uri,
+            TemplateRenderer::class => [
+                function($container) {
+                    /** @var EngineRegistry $engineRegistry */
+                    $engineRegistry = $container->get(EngineRegistry::class);
+                    $templateFileResolver = $container->get(TemplateFileResolver::class);
+                    $templateRenderer = new TemplateRenderer($engineRegistry, $templateFileResolver);
+                    $engineRegistry->registerEngine(['mustache'], $container->get(MustacheEngineFactory::class));
+                    $engineRegistry->registerEngine(['smarty', 'tpl'], $container->get(SmartyEngineFactory::class));
+                    $helperVariable = new HelperVariable($this->container->get(HelperFactory::class), $templateRenderer);
+                    $engineRegistry->registerEngine(['tpl.php'], new PhpEngineFactory($templateRenderer, $helperVariable));
+                    return $templateRenderer;
+                },
+                'singleton' => true
+            ]
+        ];
+    }
+
+    private function getBindings(): array
+    {
+        return [
+            Context::class => [fn() => $this->context, 'singleton' => true],
+            Templates::class => [Templates::class, 'singleton' => true],
             ModelBinderRegistry::class => [
                 function(Container $container) {
                     // Register model binders
@@ -89,27 +111,22 @@ class ServiceContainerBuilder
                 },
                 'singleton' => true
             ],
-            TemplateRenderer::class => [
-                function($container) {
-                    /** @var EngineRegistry $engineRegistry */
-                    $engineRegistry = $container->get(EngineRegistry::class);
-                    $templateFileResolver = $container->get(TemplateFileResolver::class);
-                    $templateRenderer = new TemplateRenderer($engineRegistry, $templateFileResolver);
-                    $engineRegistry->registerEngine(['mustache'], $container->get(MustacheEngineFactory::class));
-                    $engineRegistry->registerEngine(['smarty', 'tpl'], $container->get(SmartyEngineFactory::class));
-                    $helperVariable = new HelperVariable($this->container->get(HelperFactory::class), $templateRenderer);
-                    $engineRegistry->registerEngine(['tpl.php'], new PhpEngineFactory($templateRenderer, $helperVariable));
-                    return $templateRenderer;
-                },
-                'singleton' => true
-            ],
             SessionStore::class => [fn() => $this->session, 'singleton' => true]
-        ], $this->bindings);
+        ];
     }
 
-    public function getContainer(ServerRequestInterface $request, ResponseInterface $response): Container
+    public function setRequestDetails(ServerRequestInterface $request, ResponseInterface $response): void
     {
-        $this->container->setup($this->getBindings($request->getUri(), $request, $response));
+        $this->container->setup($this->getRequestBindings($request, $response));
+    }
+
+    public function getContainer(): Container
+    {
+        if (!$this->setup) {
+            $this->container->setup($this->getBindings());
+            $this->container->setup($this->bindings);
+            $this->setup = true;
+        }
         return $this->container;
     }
 }

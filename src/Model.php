@@ -6,7 +6,7 @@ use ntentan\nibii\RecordWrapper;
 use ntentan\nibii\ORMContext;
 
 /**
- * An extension of the nibii\RecordWrapper which contains specific extensions to make models in ntentan easier to use.
+ * An extension of the nibii\RecordWrapper which contains specific methods to make models in ntentan easier to use..
  *
  * @method static fetch
  */
@@ -18,10 +18,7 @@ class Model extends RecordWrapper
      */
     public static function createNew(): self
     {
-        $class = get_called_class();
-        $instance = new $class();
-        $instance->initialize();
-        return $instance;
+        return ORMContext::getInstance()->load(get_called_class());
     }
 
     public static function load(string $name)

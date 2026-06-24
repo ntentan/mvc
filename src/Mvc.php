@@ -13,6 +13,7 @@ use ntentan\atiaa\DbContext;
 use ntentan\atiaa\DriverFactory;
 use ntentan\kaikai\Cache;
 use ntentan\sessions\SessionStore;
+use Psr\Log\LoggerInterface;
 
 
 class Mvc {
@@ -32,7 +33,12 @@ class Mvc {
                     $container->get(ValidatorFactoryInterface::class),
                     $container->get(Cache::class)
                 );
-            DbContext::initialize(new DriverFactory($configuration['db']));
+            DbContext::initialize(
+                new DriverFactory(
+                    $configuration['db'],
+                    $configuration['db']['debug'] ?? false ? $container->get(LoggerInterface::class) : null
+                )
+            );
         }
     }
 

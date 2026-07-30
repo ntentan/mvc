@@ -86,9 +86,15 @@ class MvcMiddleware implements Middleware
      * @param array $controllerSpec
      * @return mixed
      */
-    protected function getControllerInstance(Container $container, ControllerSpec $controllerSpec)
+    protected function getControllerInstance(Container $container, ControllerSpec &$controllerSpec)
     {
-        return $container->get($controllerSpec->getControllerClass());
+        try {
+            return $container->get($controllerSpec->getControllerClass());
+        } catch (ResolutionException $exception) {
+            $controllerSpec = $container->get(NotFoundControllerSpec::class);
+            return $container->get($controllerSpec->getControllerClass());
+        }
+
     }
     
     protected function getModelBinders(Container $container): ModelBinderRegistry

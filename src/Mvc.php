@@ -10,7 +10,7 @@ use ntentan\nibii\interfaces\ValidatorFactoryInterface;
 use ntentan\nibii\factories\DriverAdapterFactory;
 use ntentan\nibii\factories\DefaultValidatorFactory;
 use ntentan\atiaa\DbContext;
-use ntentan\atiaa\DriverFactory;
+use ntentan\atiaa\DefaultDriverFactory;
 use ntentan\kaikai\Cache;
 use ntentan\sessions\SessionStore;
 use Psr\Log\LoggerInterface;
@@ -34,9 +34,9 @@ class Mvc {
                     $container->get(Cache::class)
                 );
             DbContext::initialize(
-                new DriverFactory(
-                    $configuration['db'],
-                    $configuration['db']['debug'] ?? false ? $container->get(LoggerInterface::class) : null
+                new DefaultDriverFactory(
+                    dbConfig: $configuration['db'],
+                    logger: $configuration['db']['debug'] ?? false ? $container->get(LoggerInterface::class) : null
                 )
             );
         }

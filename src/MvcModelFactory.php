@@ -16,6 +16,13 @@ class MvcModelFactory implements ModelFactoryInterface
         $this->namespace = $namespace;
     }
 
+    public function loadRecordWrapper(string $name)
+    {
+        /** @var RecordWrapper $instance */
+        $instance = new $name();
+        return $instance;
+    }
+
     public function createModel(string $name, RelationshipType $context): RecordWrapper
     {
         if ($context == RelationshipType::BELONGS_TO) {

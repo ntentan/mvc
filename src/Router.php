@@ -3,6 +3,7 @@ namespace ntentan\mvc;
 
 use ntentan\exceptions\RouteExistsException;
 use ntentan\exceptions\RouteNotAvailableException;
+use ntentan\http\filters\Route;
 
 /**
  * Provides default routing logic that loads controllers based on URLs passed to the framework.
@@ -79,17 +80,8 @@ class Router
         if(isset($this->routes[$name])) {
             throw new RouteExistsException("A route named '$name' already exists");
         }
-        // Generate a PCRE regular expression from pattern
-        $regexp = preg_replace_callback(
-            "/{(?<prefix>\*|\#)?(?<name>[a-z_][a-zA-Z0-9\_]*)}/", function ($matches) use (&$variables) {
-                $variables[] = $matches['name'];
-                return sprintf(
-                    "(?<{$matches['name']}>[a-z0-9_.~:#[\]@!$&'()*+,;=%s\s-]+)?",
-                     $matches['prefix'] != '' ? "\-/_" : null
-                );
-            },
-            str_replace('/', '(/)*', $pattern)
-        );
+
+        list($regexp, $variables) = Route::compileRoute($pattern);
 
         $this->routes[$name] = [
             'name' => $name,

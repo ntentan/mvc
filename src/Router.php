@@ -81,7 +81,7 @@ class Router
             throw new RouteExistsException("A route named '$name' already exists");
         }
 
-        list($regexp, $variables) = Route::compileRoute($pattern);
+        list($regexp, $variables) = Route::compile($pattern);
 
         $this->routes[$name] = [
             'name' => $name,

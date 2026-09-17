@@ -230,7 +230,7 @@ class MvcMiddleware implements Middleware
     }
     
     #[\Override]
-    public function configure(array $configuration)
+    public function configure(array $configuration): void
     {
         $this->router->setRoutes($configuration['routes']);
     }

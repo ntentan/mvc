@@ -2,6 +2,8 @@
 
 namespace ntentan\mvc;
 
+use ntentan\mvc\exceptions\ControllerActionNotFoundException;
+use ntentan\mvc\exceptions\ControllerNotFoundException;
 use ntentan\mvc\exceptions\ParameterNotFoundException;
 use ntentan\Context;
 use ntentan\mvc\binders\ModelBinderInterface;
@@ -36,6 +38,8 @@ class MvcMiddleware implements Middleware
     private string $namespace;
 
     private Context $context;
+
+    private bool $enableNotFoundController;
 
     public function __construct(Router $router, ServiceContainerBuilder $containerBuilder, Context $context, string $namespace = 'app')
     {
@@ -88,13 +92,22 @@ class MvcMiddleware implements Middleware
      */
     protected function getControllerInstance(Container $container, ControllerSpec &$controllerSpec)
     {
+        $controllerClass = $controllerSpec->getControllerClass();
         try {
-            return $container->get($controllerSpec->getControllerClass());
+            return $container->get($controllerClass);
         } catch (ResolutionException $exception) {
-            $controllerSpec = $container->get(NotFoundControllerSpec::class);
-            return $container->get($controllerSpec->getControllerClass());
+            if ($this->enableNotFoundController) {
+                $controllerSpec = $container->get(NotFoundControllerSpec::class);
+                return $container->get($controllerSpec->getControllerClass());
+            } else {
+                throw new ControllerNotFoundException(
+                    <<<MSG
+                    Failed to find a controller class for the current request [{$request->getUri()->getPath()}].
+                    Class [{$controllerSpec->getControllerClass()}] could not be found.
+                    MSG, previous: $exception
+                );
+            }
         }
-
     }
     
     protected function getModelBinders(Container $container): ModelBinderRegistry
@@ -115,13 +128,19 @@ class MvcMiddleware implements Middleware
         $method = $this->getActionMethod($controllerInstance, $controllerSpec, $request);
         
         if ($method === null) {
-            throw new NtentanException(
-                <<<MSG
-                Could not resolve a controller/method combination for the current request 
-                [{$request->getUri()->getPath()}]. Looking for the controller [{$controllerSpec->getControllerClass()}]
-                and a method [{$controllerSpec->getControllerAction()}].
-                MSG
-            );
+            if ($this->enableNotFoundController) {
+                $controllerSpec = $container->get(NotFoundControllerSpec::class);
+                $container->bind(ControllerSpec::class)->to(fn() => $controllerSpec);
+                $controllerInstance = $this->getControllerInstance($container, $controllerSpec);
+                $method = $this->getActionMethod($controllerInstance, $controllerSpec, $request);
+            } else {
+                throw new ControllerActionNotFoundException(
+                    <<<MSG
+                    Could not resolve an action method for the current request [{$request->getUri()->getPath()}]. 
+                    Controller [{$controllerSpec->getControllerClass()}] does not have a method [{$controllerSpec->getControllerAction()}].
+                    MSG
+                );
+            }
         }
         
         $argumentDescription = $method->getParameters();
@@ -232,6 +251,7 @@ class MvcMiddleware implements Middleware
     #[\Override]
     public function configure(array $configuration): void
     {
+        $this->enableNotFoundController = $configuration['throw_routing_exceptions'] ?? true;
         $this->router->setRoutes($configuration['routes']);
     }
     

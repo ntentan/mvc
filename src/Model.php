@@ -79,7 +79,8 @@ class Model extends RecordWrapper
         $this->hasMany = $data['hasMany'];
         $this->belongsTo = $data['belongsTo'];
         $this->manyHaveMany = $data['manyHaveMany'];
-        $this->initialize();
+        $this->initialize($this->modelData);
+        $this->connect();
     }
 
     public function count($query = null): int

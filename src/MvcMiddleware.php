@@ -2,6 +2,9 @@
 
 namespace ntentan\mvc;
 
+use ntentan\http\filters\RequestFilter;
+use ntentan\http\filters\Route;
+use ntentan\http\Uri;
 use ntentan\mvc\exceptions\ControllerActionNotFoundException;
 use ntentan\mvc\exceptions\ControllerNotFoundException;
 use ntentan\mvc\exceptions\ParameterNotFoundException;
@@ -25,8 +28,6 @@ use ntentan\http\StringStream;
  */
 class MvcMiddleware implements Middleware
 {
-    private const FILTER_ATTRIBUTES = [Header::class, Method::class, MimeHeader::class];
-    
     private Router $router;
     
     private ServiceContainerBuilder $containerBuilder;
@@ -212,31 +213,37 @@ class MvcMiddleware implements Middleware
             if ($controllerClass->getName() === $method->getDeclaringClass()->getName()) {
                 $currentScore += 1;
             }
-            $actionAttribute = $method->getAttributes(Action::class);
-            $requestedAction = $controllerSpec->getControllerAction();
-            
-            if (empty($actionAttribute)) {
-                continue;
-            } else {
-                $actionPath = $actionAttribute[0]->newInstance()->getPath();
-                if($actionPath === "" && $requestedAction != $method->getName()
-                    && Text::camelize($requestedAction) != $method->getName()
-                    || $actionPath !== "" && $actionPath != $requestedAction) 
-                {
-                    continue;
-                }
-            }
-            
-            $attributes = array_reduce(
-                self::FILTER_ATTRIBUTES, fn($carry, $x) => array_merge($carry, $method->getAttributes($x)), []
-            );
 
-            foreach ($attributes as $attribute) {
-                if (!$attribute->newInstance()->match($request)) {
-                    $currentScore = -1;
-                    break;
+            $requestedAction = $controllerSpec->getControllerAction();
+
+            foreach ($method->getAttributes() as $attribute) {
+                $attributeName = $attribute->getName();
+                $isRouteAttribute = is_a($attributeName, Route::class, true);
+                if ($isRouteAttribute) {
+                    $attributeInstance = $attribute->newInstance();
+                    // Ensure a match on both the method and the
+                    if (strtolower($attributeInstance->getMethod()) !== strtolower($request->getMethod())) {
+                        continue;
+                    }
+                    // Ensure a match for the action path allowing the Route path to override
+                    $actionPath = $attributeInstance->getRoute();
+                    if($actionPath === "" && $requestedAction != $method->getName()
+                        && Text::camelize($requestedAction) != $method->getName()
+                        || $actionPath !== "" && $actionPath != $requestedAction
+                    ) {
+                        continue;
+                    }
+                    $currentScore++;
+                } else if (!$isRouteAttribute && is_a($attributeName, RequestFilter::class, true)) {
+                    $attributeInstance = $attribute->newInstance();
+                    if ($attributeInstance->match($request)) {
+                        $currentScore++;
+                    } else {
+                        $currentScore--;
+                    }
+                } else {
+                    $currentScore--;
                 }
-                $currentScore++;
             }
             
             if ($currentScore >= $bestScore) {
@@ -251,7 +258,7 @@ class MvcMiddleware implements Middleware
     #[\Override]
     public function configure(array $configuration): void
     {
-        $this->enableNotFoundController = $configuration['throw_routing_exceptions'] ?? true;
+        $this->enableNotFoundController = $configuration['enable_not_found_controller'] ?? false;
         $this->router->setRoutes($configuration['routes']);
     }
     

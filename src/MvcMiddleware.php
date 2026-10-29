@@ -215,6 +215,7 @@ class MvcMiddleware implements Middleware
             }
 
             $requestedAction = $controllerSpec->getControllerAction();
+            $isMethodValid = false;
 
             foreach ($method->getAttributes() as $attribute) {
                 $attributeName = $attribute->getName();
@@ -234,10 +235,12 @@ class MvcMiddleware implements Middleware
                         continue;
                     }
                     $currentScore++;
+                    $isMethodValid = true;
                 } else if (!$isRouteAttribute && is_a($attributeName, RequestFilter::class, true)) {
                     $attributeInstance = $attribute->newInstance();
                     if ($attributeInstance->match($request)) {
                         $currentScore++;
+                        $isMethodValid = true;
                     } else {
                         $currentScore--;
                     }
@@ -246,7 +249,7 @@ class MvcMiddleware implements Middleware
                 }
             }
             
-            if ($currentScore >= $bestScore) {
+            if ($currentScore >= $bestScore && $isMethodValid) {
                 $bestMethod = $method;
                 $bestScore = $currentScore;
             }

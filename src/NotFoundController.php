@@ -2,14 +2,15 @@
 
 namespace ntentan\mvc;
 
-use ntentan\mvc\Action;
-use ntentan\mvc\View;
+use ntentan\http\filters\Get;
+use ntentan\http\Request;
+use ntentan\http\Response;
 
 class NotFoundController
 {
-    #[Action]
-    public function main(View $view) {
+    #[Get]
+    public function main(View $view, Response $response) {
         $view->setTemplate('404');
-        return $view;
+        return $response->withBody($view->asStream())->withStatus(404);
     }
 }

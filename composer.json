@@ -20,5 +20,13 @@
     "psr-4": {
       "ntentan\\mvc\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "ntentan\\mvc\\tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "@stable"
   }
 }

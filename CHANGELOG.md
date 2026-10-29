@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.7.0] - 2026-10-28
+## [v0.7.0] - 2026-10-29
 
 ### Added
 - Added `ControllerNotFoundException` and `ControllerActionNotFoundException` routing exceptions and configurable `enable_not_found_controller` option in `MvcMiddleware`.
@@ -12,9 +12,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 - Replaced `Action` attribute handling with `ntentan\http\filters\Route` and `RequestFilter` attributes (`Get`, `Post`, `Put`, `Delete`, `Header`, `MimeHeader`) in `MvcMiddleware`.
+- Added validation gates to `MvcMiddleware` controller action search to ensure only matching actions with route or request filter attributes are dispatched.
+- Updated `NotFoundController::main` with the `#[Get]` attribute and to return a 404 `Response` with the rendered view body.
 - Updated `Router` to use centralized `Route::compile` from `ntentan/ntentan`.
 - Updated model unserialization in `Model` to reconnect to the database context.
+- Improved documentation in `README.md` and added package metadata and test scripts to `composer.json`.
 - Updated dependencies.
+
+### Fixed
+- Fixed an undefined `$request` variable error when throwing `ControllerNotFoundException` in `MvcMiddleware`.
 
 ### Removed
 - Removed deprecated `Action` attribute class.

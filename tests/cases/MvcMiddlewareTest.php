@@ -9,6 +9,8 @@ namespace ntentan\mvc\tests\cases {
     use ntentan\http\Response;
     use ntentan\http\StringStream;
     use ntentan\http\Uri;
+    use ntentan\mvc\exceptions\ControllerActionNotFoundException;
+    use ntentan\mvc\exceptions\ControllerNotFoundException;
     use ntentan\mvc\exceptions\ParameterNotFoundException;
     use ntentan\mvc\MvcMiddleware;
     use ntentan\mvc\Router;
@@ -62,15 +64,21 @@ namespace ntentan\mvc\tests\cases {
                 View::class => fn() => new View($templates, new StringStream()),
             ]);
 
-            $this->middleware = new InspectableMvcMiddleware(
+            $this->middleware = $this->createMiddleware(false);
+        }
+
+        private function createMiddleware(bool $enableNotFoundController = false): InspectableMvcMiddleware
+        {
+            $this->router = new Router();
+            $middleware = new InspectableMvcMiddleware(
                 $this->router,
                 $this->containerBuilder,
                 $this->context,
                 'ntentan\\mvc\\tests\\fixtures'
             );
 
-            $this->middleware->configure([
-                'enable_not_found_controller' => false,
+            $middleware->configure([
+                'enable_not_found_controller' => $enableNotFoundController,
                 'routes' => [
                     [
                         'name' => 'with_id',
@@ -84,6 +92,8 @@ namespace ntentan\mvc\tests\cases {
                     ]
                 ]
             ]);
+
+            return $middleware;
         }
 
         private function createRequest(string $path, string $method = 'GET', array $headers = []): Request
@@ -170,6 +180,83 @@ namespace ntentan\mvc\tests\cases {
             $result = $this->middleware->run($request, new Response(), fn($req, $res) => $res);
 
             $this->assertSame('Custom Route Alias Matched', (string) $result->getBody());
+        }
+
+        public function testRunThrowsControllerNotFoundExceptionWhenControllerMissing(): void
+        {
+            $request = $this->createRequest('/unknown/index');
+
+            $this->expectException(ControllerNotFoundException::class);
+
+            $this->middleware->run($request, new Response(), fn($req, $res) => $res);
+        }
+
+        public function testRunThrowsControllerActionNotFoundExceptionWhenActionMissing(): void
+        {
+            $request = $this->createRequest('/items/missing_action');
+
+            $this->expectException(ControllerActionNotFoundException::class);
+
+            $this->middleware->run($request, new Response(), fn($req, $res) => $res);
+        }
+
+        public function testRunThrowsControllerActionNotFoundExceptionWhenHttpMethodDoesNotMatch(): void
+        {
+            $request = $this->createRequest('/items/hello', 'POST');
+
+            $this->expectException(ControllerActionNotFoundException::class);
+
+            $this->middleware->run($request, new Response(), fn($req, $res) => $res);
+        }
+
+        public function testRunThrowsControllerActionNotFoundExceptionWhenMethodLacksRouteAttributes(): void
+        {
+            $request = $this->createRequest('/items/unannotated_method');
+
+            $this->expectException(ControllerActionNotFoundException::class);
+
+            $this->middleware->run($request, new Response(), fn($req, $res) => $res);
+        }
+
+        public function testRunRoutesToNotFoundControllerWhenControllerNotFound(): void
+        {
+            $middleware = $this->createMiddleware(true);
+            $request = $this->createRequest('/unknown/index');
+            $result = $middleware->run($request, new Response(), fn($req, $res) => $res);
+
+            $this->assertSame(404, $result->getStatusCode());
+            $this->assertSame('<layout>rendered:404</layout>', (string) $result->getBody());
+        }
+
+        public function testRunRoutesToNotFoundControllerWhenActionNotFound(): void
+        {
+            $middleware = $this->createMiddleware(true);
+            $request = $this->createRequest('/items/missing_action');
+            $result = $middleware->run($request, new Response(), fn($req, $res) => $res);
+
+            $this->assertSame(404, $result->getStatusCode());
+            $this->assertSame('<layout>rendered:404</layout>', (string) $result->getBody());
+        }
+
+        public function testRunRoutesToNotFoundControllerWhenActionHttpMethodDoesNotMatch(): void
+        {
+            $middleware = $this->createMiddleware(true);
+            // /items/submit is only mapped for POST
+            $request = $this->createRequest('/items/submit', 'GET');
+            $result = $middleware->run($request, new Response(), fn($req, $res) => $res);
+
+            $this->assertSame(404, $result->getStatusCode());
+            $this->assertSame('<layout>rendered:404</layout>', (string) $result->getBody());
+        }
+
+        public function testRunRoutesToNotFoundControllerWhenMethodLacksRouteAttributes(): void
+        {
+            $middleware = $this->createMiddleware(true);
+            $request = $this->createRequest('/items/unannotated_method', 'GET');
+            $result = $middleware->run($request, new Response(), fn($req, $res) => $res);
+
+            $this->assertSame(404, $result->getStatusCode());
+            $this->assertSame('<layout>rendered:404</layout>', (string) $result->getBody());
         }
 
         public function testRunThrowsParameterNotFoundExceptionWhenParameterMissing(): void
@@ -280,6 +367,11 @@ namespace ntentan\mvc\tests\fixtures\controllers {
         public function returnsObject(): object
         {
             return new \stdClass();
+        }
+
+        public function unannotatedMethod(): string
+        {
+            return 'Should not be routed';
         }
     }
 }

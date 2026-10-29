@@ -101,6 +101,7 @@ class MvcMiddleware implements Middleware
                 $controllerSpec = $container->get(NotFoundControllerSpec::class);
                 return $container->get($controllerSpec->getControllerClass());
             } else {
+                $request = $container->get(ServerRequestInterface::class);
                 throw new ControllerNotFoundException(
                     <<<MSG
                     Failed to find a controller class for the current request [{$request->getUri()->getPath()}].

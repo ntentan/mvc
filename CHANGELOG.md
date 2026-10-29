@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.7.0] - 2026-10-28
+
+### Added
+- Added `ControllerNotFoundException` and `ControllerActionNotFoundException` routing exceptions and configurable `enable_not_found_controller` option in `MvcMiddleware`.
+- Added unit test suite (`phpunit.xml` and `tests/cases/*`) and GitHub Actions workflow.
+
+### Changed
+- Replaced `Action` attribute handling with `ntentan\http\filters\Route` and `RequestFilter` attributes (`Get`, `Post`, `Put`, `Delete`, `Header`, `MimeHeader`) in `MvcMiddleware`.
+- Updated `Router` to use centralized `Route::compile` from `ntentan/ntentan`.
+- Updated model unserialization in `Model` to reconnect to the database context.
+- Updated dependencies.
+
+### Removed
+- Removed deprecated `Action` attribute class.
+
 ## [v0.6.1] - 2026-08-26
 
 ### Changed

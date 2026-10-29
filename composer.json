@@ -2,20 +2,46 @@
   "name": "ntentan/mvc",
   "type": "library",
   "description": "An MVC component for the Ntentan framework",
+  "keywords": [
+    "ntentan",
+    "mvc",
+    "framework",
+    "middleware",
+    "router",
+    "controller",
+    "model",
+    "view",
+    "php"
+  ],
+  "homepage": "https://github.com/ntentan/mvc",
+  "readme": "README.md",
   "license": "MIT",
-  "require": {
-    "php": ">=8.2.0",
-    "ntentan/ntentan": "0.*",
-    "ntentan/nibii": "0.*",
-    "ntentan/honam": "0.*"
-  },
   "authors": [
     {
       "name": "James Ekow Abaka Ainooson",
       "email": "jainooson@gmail.com",
-      "homepage": "http://ekowabaka.me"
+      "homepage": "http://ekowabaka.me",
+      "role": "Developer"
     }
   ],
+  "support": {
+    "issues": "https://github.com/ntentan/mvc/issues",
+    "source": "https://github.com/ntentan/mvc"
+  },
+  "require": {
+    "php": ">=8.4.0",
+    "ntentan/atiaa": "0.*",
+    "ntentan/honam": "0.*",
+    "ntentan/kaikai": "0.*",
+    "ntentan/nibii": "0.*",
+    "ntentan/ntentan": "0.*",
+    "ntentan/panie": "0.*",
+    "ntentan/utils": "0.*",
+    "psr/http-message": "^2.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "@stable"
+  },
   "autoload": {
     "psr-4": {
       "ntentan\\mvc\\": "src/"
@@ -26,7 +52,12 @@
       "ntentan\\mvc\\tests\\": "tests/"
     }
   },
-  "require-dev": {
-    "phpunit/phpunit": "@stable"
-  }
+  "scripts": {
+    "test": "phpunit"
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }

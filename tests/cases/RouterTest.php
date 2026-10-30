@@ -3,7 +3,6 @@
 namespace ntentan\mvc\tests\cases;
 
 use ntentan\exceptions\RouteExistsException;
-use ntentan\exceptions\RouteNotAvailableException;
 use ntentan\mvc\Router;
 use PHPUnit\Framework\TestCase;
 
@@ -117,14 +116,11 @@ class RouterTest extends TestCase
         $this->router->appendRoute('home', '/home');
     }
 
-    public function testUnmatchedRouteThrowsRouteNotAvailableException(): void
+    public function testUnmatchedRouteReturnsNull(): void
     {
         $this->router->appendRoute('strict', '/exact/path');
 
-        $this->expectException(RouteNotAvailableException::class);
-        $this->expectExceptionMessage('Failed to find a route for the requested path "/unknown/path"');
-
-        $this->router->route('/unknown/path');
+        $this->assertNull($this->router->route('/unknown/path'));
     }
 }
 

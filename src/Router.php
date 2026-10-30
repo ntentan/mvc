@@ -2,7 +2,6 @@
 namespace ntentan\mvc;
 
 use ntentan\exceptions\RouteExistsException;
-use ntentan\exceptions\RouteNotAvailableException;
 use ntentan\http\filters\Route;
 
 /**
@@ -33,7 +32,6 @@ class Router
      *
      * @param string $route
      * @return ?array
-//     * @throws RouteNotAvailableException
      */
     public function route(string $route): ?array
     {
@@ -47,9 +45,6 @@ class Router
         }
 
         return null;
-//
-//        // We didn't find a match throw an exception
-//        throw new RouteNotAvailableException("Failed to find a route for the requested path \"{$route}\"");
     }
 
     private function fillInDefaultParameters($routeDescription, $parameters)

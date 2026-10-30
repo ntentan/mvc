@@ -4,13 +4,13 @@ namespace ntentan\mvc;
 
 use ntentan\http\filters\RequestFilter;
 use ntentan\http\filters\Route;
-use ntentan\http\Uri;
 use ntentan\mvc\exceptions\ControllerActionNotFoundException;
 use ntentan\mvc\exceptions\ControllerNotFoundException;
 use ntentan\mvc\exceptions\ParameterNotFoundException;
 use ntentan\Context;
 use ntentan\mvc\binders\ModelBinderInterface;
 use ntentan\panie\exceptions\ResolutionException;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ntentan\middleware\Middleware;
@@ -18,9 +18,6 @@ use ntentan\panie\Container;
 use ntentan\utils\Text;
 use ntentan\exceptions\NtentanException;
 use ntentan\mvc\binders\ModelBinderRegistry;
-use ntentan\http\filters\Header;
-use ntentan\http\filters\Method;
-use ntentan\http\filters\MimeHeader;
 use ntentan\http\StringStream;
 
 /**
@@ -50,7 +47,7 @@ class MvcMiddleware implements Middleware
         $this->namespace = $namespace;
     }
     
-    protected function getServiceContainer(?ServerRequestInterface $request=null, ?ResponseInterface $response=null)
+    protected function getServiceContainer(?ServerRequestInterface $request=null, ?ResponseInterface $response=null): ContainerInterface
     {
         if(!isset($this->serviceContainer)) {
             $this->serviceContainer = $this->containerBuilder->getContainer($request, $response);
@@ -63,19 +60,22 @@ class MvcMiddleware implements Middleware
         return $this->context;
     }
 
-    private function handleControllerNotFound(): ControllerSpec
+    private function handleControllerNotFound(?ControllerSpec $controllerSpec = null, ?\Throwable $exception = null): ControllerSpec
     {
         $container = $this->getServiceContainer();
         if ($this->enableNotFoundController) {
             return $container->get(NotFoundControllerSpec::class);
         } else {
             $request = $container->get(ServerRequestInterface::class);
-            throw new ControllerNotFoundException(
-                <<<MSG
+            $message = $controllerSpec !== null
+                ? <<<MSG
                     Failed to find a controller class for the current request [{$request->getUri()->getPath()}].
                     Class [{$controllerSpec->getControllerClass()}] could not be found.
-                    MSG, previous: $exception
-            );
+                    MSG
+                : <<<MSG
+                    Failed to find a controller class for the current request [{$request->getUri()->getPath()}].
+                    MSG;
+            throw new ControllerNotFoundException($message, previous: $exception);
         }
     }
     
@@ -84,7 +84,7 @@ class MvcMiddleware implements Middleware
      * the parameters to bind to the action method.
      * 
      * @param ServerRequestInterface $request
-     * @return array
+     * @return ControllerSpec
      */
     protected function getControllerSpec(ServerRequestInterface $request): ControllerSpec
     {
@@ -108,20 +108,20 @@ class MvcMiddleware implements Middleware
      * Create an instance of the controller from the controller specification. 
      * 
      * @param Container $container
-     * @param array $controllerSpec
-     * @return mixed
+     * @param ControllerSpec $controllerSpec
+     * @return object
      */
-    protected function getControllerInstance(Container $container, ControllerSpec &$controllerSpec)
+    protected function getControllerInstance(Container $container, ControllerSpec &$controllerSpec): object
     {
         $controllerClass = $controllerSpec->getControllerClass();
         try {
             return $container->get($controllerClass);
         } catch (ResolutionException $exception) {
-            return $container->get($this->handleControllerNotFound()->getControllerClass());
+            $controllerSpec = $this->handleControllerNotFound($controllerSpec, $exception);
+            return $container->get($controllerSpec->getControllerClass());
         }
     }
 
-    #[\Override]
     protected function getModelBinders(Container $container): ModelBinderRegistry
     {
         return $container->get(ModelBinderRegistry::class);

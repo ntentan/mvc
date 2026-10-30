@@ -12,14 +12,18 @@ namespace ntentan\mvc\tests\cases {
     use ntentan\mvc\exceptions\ControllerActionNotFoundException;
     use ntentan\mvc\exceptions\ControllerNotFoundException;
     use ntentan\mvc\exceptions\ParameterNotFoundException;
+    use ntentan\mvc\ControllerSpec;
     use ntentan\mvc\MvcMiddleware;
+    use ntentan\mvc\NotFoundControllerSpec;
     use ntentan\mvc\Router;
     use ntentan\mvc\ServiceContainerBuilder;
     use ntentan\mvc\tests\fixtures\controllers\SampleDtoArg;
     use ntentan\mvc\View;
     use ntentan\sessions\SessionStore;
     use PHPUnit\Framework\TestCase;
+    use Psr\Container\ContainerInterface;
     use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\ServerRequestInterface;
 
     class InspectableMvcMiddleware extends MvcMiddleware
     {
@@ -36,6 +40,16 @@ namespace ntentan\mvc\tests\cases {
         public function exposeRouter(): Router
         {
             return $this->getRouter();
+        }
+
+        public function exposeServiceContainer(?ServerRequestInterface $request = null, ?ResponseInterface $response = null): ContainerInterface
+        {
+            return $this->getServiceContainer($request, $response);
+        }
+
+        public function exposeControllerSpec(ServerRequestInterface $request): ControllerSpec
+        {
+            return $this->getControllerSpec($request);
         }
     }
 
@@ -119,6 +133,49 @@ namespace ntentan\mvc\tests\cases {
             $this->assertSame('custom\\ns', $this->middleware->exposeNamespace());
         }
 
+        public function testGetServiceContainerCachesAndReturnsContainer(): void
+        {
+            $request = $this->createRequest('/items/hello');
+            $response = new Response();
+
+            $container = $this->middleware->exposeServiceContainer($request, $response);
+            $this->assertInstanceOf(ContainerInterface::class, $container);
+            $this->assertSame($container, $this->middleware->exposeServiceContainer());
+        }
+
+        public function testGetControllerSpecReturnsControllerSpecWhenRouteMatches(): void
+        {
+            $request = $this->createRequest('/items/hello');
+            $spec = $this->middleware->exposeControllerSpec($request);
+
+            $this->assertInstanceOf(ControllerSpec::class, $spec);
+            $this->assertSame('ntentan\\mvc\\tests\\fixtures\\controllers\\ItemsController', ltrim($spec->getControllerClass(), '\\'));
+            $this->assertSame('hello', $spec->getControllerAction());
+        }
+
+        public function testGetControllerSpecReturnsNotFoundControllerSpecWhenNoRouteMatchesAndNotFoundEnabled(): void
+        {
+            $middleware = $this->createMiddleware(true);
+            $request = $this->createRequest('/unmatched/path/with/too/many/segments');
+            $middleware->exposeServiceContainer($request, new Response());
+            $spec = $middleware->exposeControllerSpec($request);
+
+            $this->assertInstanceOf(NotFoundControllerSpec::class, $spec);
+        }
+
+        public function testGetControllerSpecThrowsWhenNoRouteMatchesAndNotFoundDisabled(): void
+        {
+            $request = $this->createRequest('/unmatched/path/with/too/many/segments');
+            $this->middleware->exposeServiceContainer($request, new Response());
+
+            $this->expectException(ControllerNotFoundException::class);
+            $this->expectExceptionMessage(
+                'Failed to find a controller class for the current request [/unmatched/path/with/too/many/segments].'
+            );
+
+            $this->middleware->exposeControllerSpec($request);
+        }
+
         public function testRunDispatchesActionReturningString(): void
         {
             $request = $this->createRequest('/items/hello');
@@ -187,6 +244,22 @@ namespace ntentan\mvc\tests\cases {
             $request = $this->createRequest('/unknown/index');
 
             $this->expectException(ControllerNotFoundException::class);
+            $this->expectExceptionMessage(
+                "Failed to find a controller class for the current request [/unknown/index].\n" .
+                "Class [\\ntentan\\mvc\\tests\\fixtures\\controllers\\UnknownController] could not be found."
+            );
+
+            $this->middleware->run($request, new Response(), fn($req, $res) => $res);
+        }
+
+        public function testRunThrowsControllerNotFoundExceptionWhenNoRouteMatches(): void
+        {
+            $request = $this->createRequest('/unmatched/path/with/too/many/segments');
+
+            $this->expectException(ControllerNotFoundException::class);
+            $this->expectExceptionMessage(
+                'Failed to find a controller class for the current request [/unmatched/path/with/too/many/segments].'
+            );
 
             $this->middleware->run($request, new Response(), fn($req, $res) => $res);
         }
@@ -253,6 +326,16 @@ namespace ntentan\mvc\tests\cases {
         {
             $middleware = $this->createMiddleware(true);
             $request = $this->createRequest('/items/unannotated_method', 'GET');
+            $result = $middleware->run($request, new Response(), fn($req, $res) => $res);
+
+            $this->assertSame(404, $result->getStatusCode());
+            $this->assertSame('<layout>rendered:404</layout>', (string) $result->getBody());
+        }
+
+        public function testRunRoutesToNotFoundControllerWhenNoRouteMatches(): void
+        {
+            $middleware = $this->createMiddleware(true);
+            $request = $this->createRequest('/unmatched/path/with/too/many/segments');
             $result = $middleware->run($request, new Response(), fn($req, $res) => $res);
 
             $this->assertSame(404, $result->getStatusCode());

@@ -50,7 +50,7 @@ class MvcMiddleware implements Middleware
         $this->namespace = $namespace;
     }
     
-    protected function getServiceContainer(ServerRequestInterface $request, ResponseInterface $response)
+    protected function getServiceContainer(?ServerRequestInterface $request=null, ?ResponseInterface $response=null)
     {
         if(!isset($this->serviceContainer)) {
             $this->serviceContainer = $this->containerBuilder->getContainer($request, $response);
@@ -61,6 +61,22 @@ class MvcMiddleware implements Middleware
     protected function getContext(): Context
     {
         return $this->context;
+    }
+
+    private function handleControllerNotFound(): ControllerSpec
+    {
+        $container = $this->getServiceContainer();
+        if ($this->enableNotFoundController) {
+            return $container->get(NotFoundControllerSpec::class);
+        } else {
+            $request = $container->get(ServerRequestInterface::class);
+            throw new ControllerNotFoundException(
+                <<<MSG
+                    Failed to find a controller class for the current request [{$request->getUri()->getPath()}].
+                    Class [{$controllerSpec->getControllerClass()}] could not be found.
+                    MSG, previous: $exception
+            );
+        }
     }
     
     /**
@@ -74,13 +90,17 @@ class MvcMiddleware implements Middleware
     {
         $uri = $request->getUri();
         $parameters = $this->router->route($uri->getPath());
-        $controllerSpec = new ControllerSpec(
-            sprintf('\%s\controllers\%sController', $this->namespace, Text::ucamelize($parameters['controller'])),
-            $parameters['action'], $parameters['controller'], $parameters
-            
-        );
-        unset($parameters['class_name']);
-        unset($parameters['action']);
+        if ($parameters === null) {
+            $controllerSpec = $this->handleControllerNotFound();
+        } else {
+            $controllerSpec = new ControllerSpec(
+                sprintf('\%s\controllers\%sController', $this->namespace, Text::ucamelize($parameters['controller'])),
+                $parameters['action'], $parameters['controller'], $parameters
+
+            );
+            unset($parameters['class_name']);
+            unset($parameters['action']);
+        }
         return $controllerSpec;
     }
     
@@ -97,21 +117,11 @@ class MvcMiddleware implements Middleware
         try {
             return $container->get($controllerClass);
         } catch (ResolutionException $exception) {
-            if ($this->enableNotFoundController) {
-                $controllerSpec = $container->get(NotFoundControllerSpec::class);
-                return $container->get($controllerSpec->getControllerClass());
-            } else {
-                $request = $container->get(ServerRequestInterface::class);
-                throw new ControllerNotFoundException(
-                    <<<MSG
-                    Failed to find a controller class for the current request [{$request->getUri()->getPath()}].
-                    Class [{$controllerSpec->getControllerClass()}] could not be found.
-                    MSG, previous: $exception
-                );
-            }
+            return $container->get($this->handleControllerNotFound()->getControllerClass());
         }
     }
-    
+
+    #[\Override]
     protected function getModelBinders(Container $container): ModelBinderRegistry
     {
         return $container->get(ModelBinderRegistry::class);

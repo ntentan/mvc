@@ -32,10 +32,10 @@ class Router
      * Invoke the router to load a route.
      *
      * @param string $route
-     * @return array
-     * @throws RouteNotAvailableException
+     * @return ?array
+//     * @throws RouteNotAvailableException
      */
-    public function route(string $route): array
+    public function route(string $route): ?array
     {
         // Go through predefined routes till a match is found
         foreach ($this->routeOrder as $routeName) {
@@ -46,8 +46,10 @@ class Router
             }
         }
 
-        // We didn't find a match throw an exception
-        throw new RouteNotAvailableException("Failed to find a route for the requested path \"{$route}\"");
+        return null;
+//
+//        // We didn't find a match throw an exception
+//        throw new RouteNotAvailableException("Failed to find a route for the requested path \"{$route}\"");
     }
 
     private function fillInDefaultParameters($routeDescription, $parameters)

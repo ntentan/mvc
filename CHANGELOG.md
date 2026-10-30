@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.7.1] - 2026-10-29
+
+### Added
+- Added routing to `NotFoundController` when an incoming request does not match any registered route in `MvcMiddleware`.
+- Added unit tests covering unmatched routes, service container caching, and controller specification resolution in `MvcMiddlewareTest`.
+
+### Changed
+- Updated `Router::route()` to return `?array` (`null` when no route matches instead of throwing `RouteNotAvailableException`).
+- Updated `MvcMiddleware::getServiceContainer()` to accept nullable `$request` and `$response` parameters.
+
+### Fixed
+- Fixed an undefined variable error when generating `ControllerNotFoundException` in `MvcMiddleware`.
+- Fixed `MvcMiddleware` to correctly reassign and propagate `NotFoundControllerSpec` on controller resolution failure when `enable_not_found_controller` is enabled.
+
 ## [v0.7.0] - 2026-10-29
 
 ### Added
